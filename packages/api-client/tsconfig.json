@@ -1,0 +1,10 @@
+{
+  "extends": "@adb/typescript-config/base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "lib": ["ESNext", "DOM"],
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

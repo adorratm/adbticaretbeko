@@ -1,0 +1,18 @@
+{
+  "name": "@adb/api-types",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "echo \"no lint yet\""
+  },
+  "devDependencies": {
+    "@adb/typescript-config": "workspace:*",
+    "typescript": "^6.0.3"
+  }
+}

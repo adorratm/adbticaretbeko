@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Build
+.next/
+dist/
+out/
+build/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs / coverage
+*.log
+coverage/
+.turbo/
+.dev-logs/
+.auth.log
+.auth.err.log
+.customer.log
+.customer.err.log
+.catalog.log
+.catalog.err.log
+.gateway.log
+.gateway.err.log
+.*.log
+.*.err.log
+
+
+# Go
+**/bin/
+*.exe
+*.test
+*.out
+
+# Docker volumes (local)
+.docker-data/

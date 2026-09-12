@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+
+<html lang="tr"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {"darkMode":"class","theme":{"extend":{"colors":{"on-error":"#ffffff","on-secondary-fixed":"#081a3c","surface-container-high":"#dee8ff","surface-bright":"#f9f9ff","background":"#f9f9ff","on-primary-fixed":"#001a40","on-background":"#111c2d","error":"#ba1a1a","on-primary":"#ffffff","secondary":"#4f5e83","primary-container":"#0056b3","tertiary-fixed-dim":"#ffb5a0","secondary-fixed":"#d9e2ff","on-secondary-container":"#4c5b80","on-secondary-fixed-variant":"#37466a","inverse-primary":"#acc7ff","on-surface-variant":"#424752","on-tertiary-fixed":"#3b0900","surface-tint":"#115cb9","outline":"#727784","on-tertiary-fixed-variant":"#862200","error-container":"#ffdad6","primary-fixed":"#d7e2ff","inverse-on-surface":"#ecf1ff","tertiary-container":"#a62c00","on-error-container":"#93000a","surface-container-highest":"#d8e3fb","on-secondary":"#ffffff","secondary-container":"#c4d4ff","surface-container-low":"#f0f3ff","inverse-surface":"#263143","outline-variant":"#c2c6d4","secondary-fixed-dim":"#b6c6f1","surface-dim":"#cfdaf2","tertiary-fixed":"#ffdbd1","on-surface":"#111c2d","primary":"#003f87","surface":"#f9f9ff","on-primary-fixed-variant":"#004491","tertiary":"#7d1f00","on-tertiary-container":"#ffc2b1","surface-container":"#e7eeff","primary-fixed-dim":"#acc7ff","on-tertiary":"#ffffff","surface-variant":"#d8e3fb","surface-container-lowest":"#ffffff","on-primary-container":"#bbd0ff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter":"1.5rem","space-sm":"0.5rem","space-md":"1rem","space-xs":"0.25rem","gutter-mobile":"0.75rem","margin":"2rem","space-xl":"2rem","margin-mobile":"1rem","space-lg":"1.5rem"},"fontFamily":{"body-sm":["Inter"],"body-lg":["Inter"],"headline-lg":["Inter"],"headline-md":["Inter"],"label-sm":["Inter"],"headline-lg-mobile":["Inter"],"price-currency":["Inter"],"headline-sm":["Inter"],"label-md":["Inter"],"price-display":["Inter"],"display":["Inter"],"label-lg":["Inter"],"body-md":["Inter"]},"fontSize":{"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0.04em","fontWeight":"700"}],"headline-lg-mobile":["26px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"700"}],"price-currency":["14px",{"lineHeight":"16px","fontWeight":"600"}],"headline-sm":["18px",{"lineHeight":"26px","fontWeight":"600"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"600"}],"price-display":["24px",{"lineHeight":"28px","letterSpacing":"-0.02em","fontWeight":"700"}],"display":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"label-lg":["14px",{"lineHeight":"20px","letterSpacing":"0.01em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}]}}}};</script></head><body class="bg-background font-body-md text-on-background"><aside class="fixed left-0 top-0 h-full w-72 bg-inverse-surface z-50 flex flex-col justify-between py-space-lg"><div class="flex flex-col"><div class="px-space-lg pb-space-lg"><div class="flex items-center gap-space-sm mb-space-xs"><img alt="ADB Ticaret Beko Yetkili Satıcı Logosu" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Wm322KTmpdhVero0khhXjyWuIHmPI7TnUTu7oeHvy8bD3BZW1MhuDdGrHrtzHJ55JCi2oTKzhm2ihKOTRj1SDWV9o2lZUVkQHO_zKtBvz7EsG3m8C6RwsIg2oMxZaO3mTQVzljZQTUwriwmghRZhqvNkMJtgIeoGMF-k7qJ7WUcjmTILZoeXzBO0kRMCcMQ36GyCLgV-VcZE3HFL2ZDwVGFDgGJmuzszQk9Pzyz8zNtWVi4WBF6T6IPw"/><span class="font-headline-sm text-headline-sm text-inverse-on-surface font-bold tracking-tight">ADB PANEL</span></div><div class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-surface-tint"></span><span class="font-label-sm text-label-sm text-secondary-fixed uppercase tracking-wider">Beko Yetkili Bayi Portalı</span></div></div><div class="px-space-lg mb-space-sm"><span class="font-label-sm text-label-sm text-secondary-fixed uppercase tracking-wider">Modüller</span></div><nav class="flex flex-col px-space-md gap-space-xs" data-active-classes="bg-primary text-on-primary font-bold"><a aria-current="page" class="flex items-center px-space-md py-space-sm rounded-lg transition-all gap-space-md bg-primary text-on-primary font-bold" data-path="admin-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">space_dashboard</span>Dashboard</a><a class="flex items-center px-space-md py-space-sm rounded-lg text-secondary-fixed hover:bg-surface-container-highest hover:text-on-surface transition-all gap-space-md font-label-md text-label-md" data-path="admin-urun-yonetimi" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span>Ürün Yönetimi</a><a class="flex items-center px-space-md py-space-sm rounded-lg text-secondary-fixed hover:bg-surface-container-highest hover:text-on-surface transition-all gap-space-md font-label-md text-label-md" data-path="admin-siparisler-sevkiyat" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span>Siparişler & Sevkiyat</a><a class="flex items-center px-space-md py-space-sm rounded-lg text-secondary-fixed hover:bg-surface-container-highest hover:text-on-surface transition-all gap-space-md font-label-md text-label-md" data-path="admin-montaj-ve-servis" href="#"><span class="material-symbols-outlined text-[20px]">engineering</span>Montaj & Servis Randevuları</a><a class="flex items-center px-space-md py-space-sm rounded-lg text-secondary-fixed hover:bg-surface-container-highest hover:text-on-surface transition-all gap-space-md font-label-md text-label-md" data-path="admin-musteriler" href="#"><span class="material-symbols-outlined text-[20px]">group</span>Müşteriler</a><a class="flex items-center px-space-md py-space-sm rounded-lg text-secondary-fixed hover:bg-surface-container-highest hover:text-on-surface transition-all gap-space-md font-label-md text-label-md" data-path="admin-kampanyalar" href="#"><span class="material-symbols-outlined text-[20px]">campaign</span>Kampanyalar</a><a class="flex items-center px-space-md py-space-sm rounded-lg text-secondary-fixed hover:bg-surface-container-highest hover:text-on-surface transition-all gap-space-md font-label-md text-label-md" data-path="admin-raporlar-gelir" href="#"><span class="material-symbols-outlined text-[20px]">monitoring</span>Raporlar & Gelir</a><a class="flex items-center px-space-md py-space-sm rounded-lg text-secondary-fixed hover:bg-surface-container-highest hover:text-on-surface transition-all gap-space-md font-label-md text-label-md" data-path="admin-magaza-ayarlari" href="#"><span class="material-symbols-outlined text-[20px]">settings</span>Mağaza Ayarları</a></nav></div><div class="px-space-md"><div class="p-space-md bg-inverse-on-surface/10 rounded-lg flex items-center justify-between"><div class="flex flex-col"><span class="font-label-sm text-label-sm text-secondary-fixed">Beko Bayi Hattı</span><span class="font-body-sm text-body-sm text-inverse-on-surface font-semibold">444 0 888</span></div><a class="p-space-xs bg-inverse-on-surface/20 hover:bg-inverse-on-surface/30 text-inverse-on-surface rounded-DEFAULT transition-colors" data-path="home" href="#" title="Mağazaya Git"><span class="material-symbols-outlined text-[18px]">storefront</span></a></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-xl"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm px-space-md py-space-xs bg-surface-container-low rounded-lg"><span class="material-symbols-outlined text-[18px] text-primary">store</span><select class="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none cursor-pointer"><option value="b1">Merkez Şube - Beşiktaş / İst</option><option value="b2">Kadıköy Konsept Mağaza</option><option value="b3">Bursa Nilüfer Beko Plaza</option></select></div><div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>Beko Entegrasyon: Aktif</div></div><div class="flex items-center gap-space-lg"><div class="relative flex items-center"><span class="material-symbols-outlined absolute left-space-sm text-[18px] text-outline">search</span><input class="pl-8 pr-space-md py-space-xs bg-surface-container-low rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none w-64" placeholder="Sipariş, müşteri veya model kodu ara..." type="text"/></div><button class="relative p-space-xs text-on-surface-variant hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-error"></span></button><div class="flex items-center gap-space-sm pl-space-md"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOrguuZf9jTFYrExn0cJPED5b4SiFs7M0KTdfOQ-r-AdR_PKTWiKyZ_nVOBxvpodeeB7F31MXAISo1h455uN3bNme1rkGcS-pjDxcqyVpZAdy2xC_e_7FejyZUHYRGq05HhaNZalm2xNc11H9Ge0IhXjaLf9k7Pzv6C_elQfo14usQaRGSf_p9h1dm4--1z4Ba3VYrawyfarkmLBCqK38GtQ7whAcZZEszHXTwYYvtFrDShnavz-Gt"/><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-on-surface font-semibold">Ahmet Demir</span><span class="font-label-sm text-label-sm text-secondary">Mağaza Müdürü</span></div></div></div></header><main class="w-full pt-16 bg-background p-space-xl"><div class="flex flex-col w-full">
+<!-- Top Dealer Operational Header Banner -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm mb-space-lg flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-inverse-surface flex items-center justify-center text-primary-fixed shadow-sm">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+<div>
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-md text-headline-md text-on-surface">ADB Ticaret Beko Yetkili Satıcısı</h1>
+<span class="px-space-sm py-0.5 rounded-DEFAULT bg-primary-container text-on-primary font-label-sm text-label-sm uppercase tracking-wider">Merkez Mağaza</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-space-xs mt-0.5">
+<span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
+<span>Bugün: 24 Mayıs 2024</span>
+<span class="mx-space-xs text-outline-variant">•</span>
+<span class="inline-flex items-center gap-1 text-emerald-700 font-label-md text-label-md">
+<span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+            Canlı Mağaza Durumu: Aktif & Beko Portal Senkronize
+          </span>
+</p>
+</div>
+</div>
+<!-- Header Quick Actions -->
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<button class="px-space-md py-space-sm bg-surface-container-low hover:bg-surface-container text-on-surface rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+<span>Stok Eşitle</span>
+</button>
+<button class="px-space-md py-space-sm bg-primary hover:bg-on-primary-fixed-variant text-on-primary rounded-lg font-label-md text-label-md flex items-center gap-space-xs transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>Yeni Hızlı Satış</span>
+</button>
+</div>
+</div>
+<!-- KPI Metric Cards (4 in a row) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-lg mb-space-xl">
+<!-- Card 1: Aylık Ciro -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-primary-container"></div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Aylık Ciro</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg text-on-surface">2.845.600</span>
+<span class="font-price-currency text-price-currency text-on-surface-variant font-bold">₺</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">payments</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low/50 rounded-lg p-space-xs flex items-center justify-between">
+<div class="flex items-center gap-1 text-emerald-700 font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span>+18.4%</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">geçen aya göre</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-bold">Hedef: %84</span>
+</div>
+</div>
+<!-- Card 2: Toplam Sipariş -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-surface-tint"></div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Toplam Sipariş</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg text-on-surface">142</span>
+<span class="font-body-md text-body-md text-on-surface-variant font-semibold">Adet</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low text-surface-tint flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">shopping_bag</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low/50 rounded-lg p-space-xs flex items-center justify-between">
+<div class="flex items-center gap-1 text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">today</span>
+<span>Bugün 12 yeni sipariş</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary font-medium">Ort: 20.039 ₺</span>
+</div>
+</div>
+<!-- Card 3: Bekleyen Montaj / Sevkiyat -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-tertiary-container"></div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Bekleyen Montaj / Sevkiyat</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg text-tertiary">19</span>
+<span class="font-body-md text-body-md text-on-surface-variant font-semibold">Görev</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed/30 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">local_shipping</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low/50 rounded-lg p-space-xs flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">engineering</span>
+          Beko Yetkili Servisine iletildi
+        </span>
+<span class="font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed px-1.5 py-0.5 rounded-DEFAULT font-bold">14 Acil</span>
+</div>
+</div>
+<!-- Card 4: Kritik Stok Uyarısı -->
+<div class="relative bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-error"></div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Kritik Stok Uyarısı</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-headline-lg text-headline-lg text-error">4</span>
+<span class="font-body-md text-body-md text-on-surface-variant font-semibold">Model</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-error-container text-on-error-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">inventory_2</span>
+</div>
+</div>
+<div class="mt-space-md pt-space-sm bg-surface-container-low/50 rounded-lg p-space-xs flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-error font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+          Minimum eşik altında
+        </span>
+<a class="font-label-sm text-label-sm text-primary hover:underline font-bold" href="#kritik-stok">Talepleri Gör</a>
+</div>
+</div>
+</div>
+<!-- Main Operational & Analytics Section (2/3 + 1/3) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg mb-space-xl">
+<!-- Chart Component (2 Cols) -->
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm mb-space-lg">
+<div>
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Satış Trendi & Kategori Dağılımı</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Beko Beyaz Eşya, Ankastre, Klima ve Televizyon segment satış hacimleri</p>
+</div>
+<!-- Period Toggle Buttons -->
+<div class="flex items-center p-1 bg-surface-container-low rounded-lg self-start sm:self-auto" id="period-switch">
+<button class="px-space-md py-1 rounded-DEFAULT bg-surface-container-lowest text-primary font-label-md text-label-md shadow-xs transition-all" data-period="weekly">Haftalık</button>
+<button class="px-space-md py-1 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" data-period="monthly">Aylık</button>
+<button class="px-space-md py-1 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" data-period="yearly">Yıllık</button>
+</div>
+</div>
+<!-- Segment Chips & Indicators -->
+<div class="flex flex-wrap items-center gap-space-md mb-space-md pb-space-sm bg-surface-container-low/40 p-space-sm rounded-lg">
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-on-surface">
+<span class="w-3 h-3 rounded-DEFAULT bg-primary"></span>
+<span>Beyaz Eşya (%52)</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-on-surface">
+<span class="w-3 h-3 rounded-DEFAULT bg-surface-tint"></span>
+<span>Ankastre Serisi (%24)</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-on-surface">
+<span class="w-3 h-3 rounded-DEFAULT bg-tertiary-container"></span>
+<span>İklimlendirme / Klima (%16)</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-on-surface">
+<span class="w-3 h-3 rounded-DEFAULT bg-secondary"></span>
+<span>TV & Elektronik (%8)</span>
+</div>
+</div>
+<!-- Responsive SVG Area & Bar Chart Simulation -->
+<div class="relative w-full h-64 flex flex-col justify-end">
+<svg class="w-full h-44 overflow-visible" preserveaspectratio="none" viewbox="0 0 700 160">
+<!-- Grid lines -->
+<line class="text-surface-container-highest" stroke="currentColor" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="700" y1="0" y2="0"></line>
+<line class="text-surface-container-highest" stroke="currentColor" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="700" y1="40" y2="40"></line>
+<line class="text-surface-container-highest" stroke="currentColor" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="700" y1="80" y2="80"></line>
+<line class="text-surface-container-highest" stroke="currentColor" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="700" y1="120" y2="120"></line>
+<line class="text-surface-container-highest" stroke="currentColor" stroke-width="1" x1="0" x2="700" y1="160" y2="160"></line>
+<!-- Gradient Area -->
+<defs>
+<lineargradient id="areaGradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#0056b3" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#0056b3" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<path d="M 30,120 Q 90,80 150,95 T 270,60 T 390,45 T 510,75 T 630,25 L 630,160 L 30,160 Z" fill="url(#areaGradient)"></path>
+<!-- Primary Sparkline Trend -->
+<path d="M 30,120 Q 90,80 150,95 T 270,60 T 390,45 T 510,75 T 630,25" fill="none" stroke="#003f87" stroke-linecap="round" stroke-width="3.5"></path>
+<!-- Secondary Category Comparison Curve -->
+<path d="M 30,140 Q 90,125 150,110 T 270,90 T 390,95 T 510,60 T 630,48" fill="none" stroke="#a62c00" stroke-dasharray="3 3" stroke-width="2"></path>
+<!-- Interactive Node Dots -->
+<circle cx="30" cy="120" fill="#ffffff" r="4" stroke="#003f87" stroke-width="2"></circle>
+<circle cx="150" cy="95" fill="#ffffff" r="4" stroke="#003f87" stroke-width="2"></circle>
+<circle cx="270" cy="60" fill="#ffffff" r="4" stroke="#003f87" stroke-width="2"></circle>
+<circle cx="390" cy="45" fill="#ffffff" r="4" stroke="#003f87" stroke-width="2"></circle>
+<circle cx="510" cy="75" fill="#ffffff" r="4" stroke="#003f87" stroke-width="2"></circle>
+<circle cx="630" cy="25" fill="#0056b3" r="5" stroke="#ffffff" stroke-width="2"></circle>
+</svg>
+<!-- X-Axis Labels -->
+<div class="flex justify-between items-center pt-space-xs font-label-sm text-label-sm text-on-surface-variant border-none">
+<span>Pzt</span>
+<span>Sal</span>
+<span>Çar</span>
+<span>Per</span>
+<span>Cum</span>
+<span>Cmt</span>
+<span class="font-bold text-primary">Paz (Canlı)</span>
+</div>
+</div>
+<!-- Quick Metrics Summary Footer -->
+<div class="grid grid-cols-3 gap-space-sm pt-space-md mt-space-md bg-surface-container-low rounded-lg p-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary">Haftalık Satış Adedi</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">48 Adet</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary">Sepet Ortalaması</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">24.150 ₺</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary">En Çok Satan Seri</span>
+<span class="font-headline-sm text-headline-sm text-primary font-bold">Beko ProSmart™</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Regional Goals & Beko Campaigns -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">workspace_premium</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Bölge & Prim İlerlemesi</h2>
+</div>
+<span class="px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-primary font-label-sm text-label-sm font-bold">Mayıs '24</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">Marmara Bölge Müdürlüğü Çeyrek Dönem Bayi Kota Gerçekleşmesi</p>
+<!-- Progress Ring Visual Container -->
+<div class="flex items-center justify-center my-space-md">
+<div class="relative w-40 h-40 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
+<!-- Background track -->
+<circle class="text-surface-container-highest" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-width="9"></circle>
+<!-- Progress Arc 84% -->
+<circle class="text-primary-container" cx="50" cy="50" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="40.19" stroke-linecap="round" stroke-width="9"></circle>
+</svg>
+<div class="absolute flex flex-col items-center text-center">
+<span class="font-display text-[32px] leading-tight text-on-surface font-bold tracking-tight">%84</span>
+<span class="font-label-sm text-label-sm text-secondary uppercase">Kota Ulaşımı</span>
+</div>
+</div>
+</div>
+<!-- Target Metrics List -->
+<div class="space-y-space-sm mb-space-lg">
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">flag</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Hedef Ciro Eşiği</span>
+<span class="font-body-sm text-body-sm text-secondary">3.400.000 ₺</span>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface font-bold">554.400 ₺ Kaldı</span>
+</div>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-tertiary-container">redeem</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Beko Ekstra Bayi Primi</span>
+<span class="font-body-sm text-body-sm text-secondary">A+ Teşvik Baremi</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-space-xs py-0.5 rounded-DEFAULT bg-emerald-100 text-emerald-800 font-bold">Hak Edildi</span>
+</div>
+</div>
+</div>
+<!-- Beko Active Campaign Card -->
+<div class="bg-primary text-on-primary rounded-lg p-space-md">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-secondary-fixed uppercase tracking-wider">Aktif Beko Teşviki</span>
+<span class="font-headline-sm text-headline-sm font-bold mt-0.5">Yaza Hazırlık Klima Kampanyası</span>
+</div>
+<span class="material-symbols-outlined text-secondary-fixed">campaign</span>
+</div>
+<p class="font-body-sm text-body-sm text-secondary-fixed mt-1">Her inverter klima satışına +450 ₺ montaj ikramiyesi bayi hesabına yansıtılır.</p>
+<div class="mt-space-sm pt-space-xs flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-surface-tint bg-white/90 px-space-xs py-0.5 rounded-DEFAULT font-bold">Son 6 Gün</span>
+<span class="font-label-sm text-label-sm text-on-primary font-medium underline cursor-pointer">Koşulları İncele</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Lower Section: Operational Tables (2 Split Panels) -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+<!-- Panel 1: Son Gelen Siparişler (8 Cols) -->
+<div class="xl:col-span-8 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">receipt_long</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Son Gelen Siparişler & Sevkiyat Durumu</h3>
+</div>
+<a class="font-label-md text-label-md text-primary hover:underline flex items-center gap-0.5" href="#">
+            Tüm Siparişleri Gör (142)
+            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<!-- Orders Table -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-secondary font-label-sm text-label-sm uppercase">
+<th class="py-space-sm px-space-md rounded-l-lg">Sipariş No</th>
+<th class="py-space-sm px-space-md">Müşteri</th>
+<th class="py-space-sm px-space-md">Ürün Modeli</th>
+<th class="py-space-sm px-space-md">Tutar</th>
+<th class="py-space-sm px-space-md">Durum</th>
+<th class="py-space-sm px-space-md">Montaj / Randevu</th>
+<th class="py-space-sm px-space-md rounded-r-lg text-right">İşlem</th>
+</tr>
+</thead>
+<tbody class="divide-y-0">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-md font-label-md text-label-md text-primary font-bold">#ADB-8492</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-primary flex items-center justify-center font-label-sm text-label-sm font-bold">AY</div>
+<span class="font-body-md text-body-md text-on-surface font-medium">Ahmet Yılmaz</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">B5RCNE505LXP Buzdolabı</span>
+<span class="font-body-sm text-body-sm text-secondary">No-Frost Kombi 505L</span>
+</div>
+</td>
+<td class="py-space-md px-space-md font-label-md text-label-md text-on-surface font-bold">34.499 ₺</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center px-space-xs py-0.5 rounded-DEFAULT text-[11px] font-bold bg-primary-fixed text-on-primary-fixed">
+                    Hazırlanıyor
+                  </span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">schedule</span>
+                    Yarın 14:00
+                  </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="p-1 text-secondary hover:text-primary rounded-DEFAULT hover:bg-surface-container" title="Detay">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-md font-label-md text-label-md text-primary font-bold">#ADB-8491</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">ZK</div>
+<span class="font-body-md text-body-md text-on-surface font-medium">Zeynep Kaya</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Beko 31225 Klima</span>
+<span class="font-body-sm text-body-sm text-secondary">12.000 BTU ProSmart</span>
+</div>
+</td>
+<td class="py-space-md px-space-md font-label-md text-label-md text-on-surface font-bold">26.750 ₺</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center px-space-xs py-0.5 rounded-DEFAULT text-[11px] font-bold bg-tertiary-fixed text-on-tertiary-fixed">
+                    Yetkili Servise Sevk Edildi
+                  </span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">event</span>
+                    25 Mayıs
+                  </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="p-1 text-secondary hover:text-primary rounded-DEFAULT hover:bg-surface-container" title="Detay">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-md font-label-md text-label-md text-primary font-bold">#ADB-8490</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-label-sm text-label-sm font-bold">MÇ</div>
+<span class="font-body-md text-body-md text-on-surface font-medium">Mehmet Çelik</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">B5WFT510427W Çamaşır Mak.</span>
+<span class="font-body-sm text-body-sm text-secondary">10 Kg 1400 Devir</span>
+</div>
+</td>
+<td class="py-space-md px-space-md font-label-md text-label-md text-on-surface font-bold">22.899 ₺</td>
+<td class="py-space-md px-space-md">
+<span class="inline-flex items-center px-space-xs py-0.5 rounded-DEFAULT text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                    Teslim Edildi
+                  </span>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-label-sm text-label-sm text-emerald-700 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                    Montaj Tamamlandı
+                  </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="p-1 text-secondary hover:text-primary rounded-DEFAULT hover:bg-surface-container" title="Detay">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="pt-space-md flex items-center justify-between font-label-sm text-label-sm text-secondary">
+<span>Son güncelleme: 3 dakika önce</span>
+<span class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+          Beko ERP Canlı Akış
+        </span>
+</div>
+</div>
+<!-- Panel 2: Kritik Stok Modelleri (4 Cols) -->
+<div class="xl:col-span-4 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between" id="kritik-stok">
+<div>
+<div class="flex items-center justify-between mb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-error text-[22px]">inventory</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Kritik Stok Uyarıları</h3>
+</div>
+<span class="px-space-xs py-0.5 rounded-DEFAULT bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">Eşik Altı</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">Mağaza stoğu tükenmek üzere olan ve acil sipariş açılması gereken Beko ürünleri</p>
+<!-- Product Stock Cards -->
+<div class="space-y-space-md">
+<!-- Item 1 -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="flex gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">local_laundry_service</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface font-semibold">Beko B3T49230W</h4>
+<p class="font-body-sm text-body-sm text-secondary">9 Kg Isı Pompalı Kurutma</p>
+</div>
+</div>
+<span class="px-space-xs py-0.5 rounded-DEFAULT bg-error text-on-error font-label-sm text-label-sm font-bold">Kalan: 1 Adet</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Min. Eşik: 3 Adet</span>
+<button class="px-space-sm py-1 rounded-DEFAULT bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center gap-1 transition-colors" onclick="requestStock('Beko B3T49230W')">
+<span class="material-symbols-outlined text-[14px]">add_shopping_cart</span>
+                Beko Merkez Depodan Talep Et
+              </button>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="flex gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">tv</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface font-semibold">Beko 4K Smart TV 55"</h4>
+<p class="font-body-sm text-body-sm text-secondary">B55 C 890 A Android Google TV</p>
+</div>
+</div>
+<span class="px-space-xs py-0.5 rounded-DEFAULT bg-error text-on-error font-label-sm text-label-sm font-bold">Kalan: 2 Adet</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Min. Eşik: 5 Adet</span>
+<button class="px-space-sm py-1 rounded-DEFAULT bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center gap-1 transition-colors" onclick="requestStock('Beko 4K Smart TV 55')">
+<span class="material-symbols-outlined text-[14px]">add_shopping_cart</span>
+                Beko Merkez Depodan Talep Et
+              </button>
+</div>
+</div>
+<!-- Item 3 (Additional operational item for high density) -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div class="flex gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">soup_kitchen</span>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface font-semibold">Beko BM 4144 I Bulaşık Mak.</h4>
+<p class="font-body-sm text-body-sm text-secondary">4 Programlı Inox A++</p>
+</div>
+</div>
+<span class="px-space-xs py-0.5 rounded-DEFAULT bg-tertiary-container text-on-primary font-label-sm text-label-sm font-bold">Kalan: 2 Adet</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Min. Eşik: 4 Adet</span>
+<button class="px-space-sm py-1 rounded-DEFAULT bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center gap-1 transition-colors" onclick="requestStock('Beko BM 4144 I')">
+<span class="material-symbols-outlined text-[14px]">add_shopping_cart</span>
+                Beko Merkez Depodan Talep Et
+              </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Supply Link -->
+<div class="pt-space-md">
+<a class="w-full py-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md flex items-center justify-center gap-space-xs transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">warehouse</span>
+          Tüm Depo Sipariş Talepleri & Sevkiyat Formu
+        </a>
+</div>
+</div>
+</div>
+<!-- Toast Notification Modal Container for Demo Interaction -->
+<div class="fixed bottom-6 right-6 z-50 bg-inverse-surface text-inverse-on-surface px-space-lg py-space-md rounded-lg shadow-xl flex items-center gap-space-md translate-y-24 opacity-0 transition-all duration-300 pointer-events-none" id="dealer-toast">
+<span class="material-symbols-outlined text-emerald-400 text-[24px]">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold" id="toast-title">Talep Gönderildi</span>
+<span class="font-body-sm text-body-sm text-secondary-fixed" id="toast-message">Beko Merkez Dağıtım Ağına transfer emri oluşturuldu.</span>
+</div>
+</div>
+</div>
+<script>
+  // Period Selector Interactive Switcher
+  const buttons = document.querySelectorAll('#period-switch button');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => {
+        b.className = 'px-space-md py-1 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all';
+      });
+      btn.className = 'px-space-md py-1 rounded-DEFAULT bg-surface-container-lowest text-primary font-label-md text-label-md shadow-xs transition-all';
+    });
+  });
+
+  // Quick Stock Request Trigger
+  function requestStock(modelName) {
+    const toast = document.getElementById('dealer-toast');
+    const toastTitle = document.getElementById('toast-title');
+    const toastMsg = document.getElementById('toast-message');
+    
+    toastTitle.innerText = modelName + ' Siparişi Geçildi';
+    toastMsg.innerText = 'Beko Lojistik Merkezi (Çerkezköy) siparişi onayladı.';
+    
+    toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+    
+    setTimeout(() => {
+      toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+    }, 3500);
+  }
+</script></main></div></body></html>

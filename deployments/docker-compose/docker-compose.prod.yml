@@ -1,0 +1,303 @@
+# Extends root compose with all Go services + frontends for single-host (Hetzner) deploy.
+services:
+  gateway:
+    build:
+      context: ../..
+      dockerfile: services/backend/gateway/Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      HTTP_ADDR: ":8080"
+      JWT_SECRET: ${JWT_SECRET}
+      AUTH_URL: http://auth:8081
+      CUSTOMER_URL: http://customer:8082
+      CATALOG_URL: http://catalog:8083
+      INVENTORY_URL: http://inventory:8084
+      PRICING_URL: http://pricing:8085
+      PROMOTION_URL: http://promotion:8086
+      CART_URL: http://cart:8087
+      CHECKOUT_URL: http://checkout:8088
+      ORDER_URL: http://order:8089
+      PAYMENT_URL: http://payment:8090
+      SHIPMENT_URL: http://shipment:8091
+      NOTIFICATION_URL: http://notification:8092
+      SEARCH_URL: http://search:8093
+      REVIEW_URL: http://review:8094
+      WISHLIST_URL: http://wishlist:8095
+      MARKETPLACE_URL: http://marketplace:8096
+      ACCOUNTING_URL: http://accounting:8097
+      REPORTING_URL: http://reporting:8098
+      RETAIL_URL: http://retail:8101
+      CMS_URL: http://cms:8100
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth
+      - customer
+      - catalog
+      - retail
+      - marketplace
+      - reporting
+
+  auth:
+    build:
+      context: ../..
+      dockerfile: services/backend/auth/Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      HTTP_ADDR: ":8081"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=auth
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-168h}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  customer:
+    build:
+      context: ../..
+      dockerfile: services/backend/customer/Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      HTTP_ADDR: ":8082"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=customer
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  catalog:
+    build:
+      context: ../..
+      dockerfile: services/backend/catalog/Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      HTTP_ADDR: ":8083"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=catalog
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  inventory:
+    build:
+      context: ../..
+      dockerfile: services/backend/inventory/Dockerfile
+    environment:
+      HTTP_ADDR: ":8084"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=inventory
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  pricing:
+    build:
+      context: ../..
+      dockerfile: services/backend/pricing/Dockerfile
+    environment:
+      HTTP_ADDR: ":8085"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=pricing
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  promotion:
+    build:
+      context: ../..
+      dockerfile: services/backend/promotion/Dockerfile
+    environment:
+      HTTP_ADDR: ":8086"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=promotion
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  cart:
+    build:
+      context: ../..
+      dockerfile: services/backend/cart/Dockerfile
+    environment:
+      HTTP_ADDR: ":8087"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=cart
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  checkout:
+    build:
+      context: ../..
+      dockerfile: services/backend/checkout/Dockerfile
+    environment:
+      HTTP_ADDR: ":8088"
+    depends_on:
+      - cart
+      - inventory
+      - order
+
+  order:
+    build:
+      context: ../..
+      dockerfile: services/backend/order/Dockerfile
+    environment:
+      HTTP_ADDR: ":8089"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=order
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  payment:
+    build:
+      context: ../..
+      dockerfile: services/backend/payment/Dockerfile
+    environment:
+      HTTP_ADDR: ":8090"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=payment
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  shipment:
+    build:
+      context: ../..
+      dockerfile: services/backend/shipment/Dockerfile
+    environment:
+      HTTP_ADDR: ":8091"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=shipment
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  notification:
+    build:
+      context: ../..
+      dockerfile: services/backend/notification/Dockerfile
+    environment:
+      HTTP_ADDR: ":8092"
+      NATS_URL: nats://nats:4222
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+    depends_on:
+      - nats
+      - mailpit
+
+  search:
+    build:
+      context: ../..
+      dockerfile: services/backend/search/Dockerfile
+    environment:
+      HTTP_ADDR: ":8093"
+      CATALOG_URL: http://catalog:8083
+      ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  review:
+    build:
+      context: ../..
+      dockerfile: services/backend/review/Dockerfile
+    environment:
+      HTTP_ADDR: ":8094"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=review
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  wishlist:
+    build:
+      context: ../..
+      dockerfile: services/backend/wishlist/Dockerfile
+    environment:
+      HTTP_ADDR: ":8095"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=wishlist
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  marketplace:
+    build:
+      context: ../..
+      dockerfile: services/backend/marketplace/Dockerfile
+    environment:
+      HTTP_ADDR: ":8096"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=marketplace
+      NATS_URL: nats://nats:4222
+      BEKO_ERP_BASE_URL: ${BEKO_ERP_BASE_URL:-https://erp.beko.example}
+      BEKO_ERP_API_KEY: ${BEKO_ERP_API_KEY:-}
+      BEKO_DEALER_CODE: ${BEKO_DEALER_CODE:-BEKO-TR-340982}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+
+  accounting:
+    build:
+      context: ../..
+      dockerfile: services/backend/accounting/Dockerfile
+    environment:
+      HTTP_ADDR: ":8097"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=accounting
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  reporting:
+    build:
+      context: ../..
+      dockerfile: services/backend/reporting/Dockerfile
+    environment:
+      HTTP_ADDR: ":8098"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=reporting
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  retail:
+    build:
+      context: ../..
+      dockerfile: services/backend/retail/Dockerfile
+    environment:
+      HTTP_ADDR: ":8101"
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=retail
+      TRADE_IN_MAX_KURUS: ${TRADE_IN_MAX_KURUS:-1500000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: services/backend/worker/Dockerfile
+    environment:
+      HTTP_ADDR: ":8099"
+      NATS_URL: nats://nats:4222
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable&search_path=worker
+    depends_on:
+      - nats
+      - postgres
+
+  storefront:
+    build:
+      context: ../..
+      dockerfile: apps/storefront/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost/api}
+    ports:
+      - "3000:3000"
+
+  admin:
+    build:
+      context: ../..
+      dockerfile: apps/admin/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost/api}
+    ports:
+      - "3001:3001"

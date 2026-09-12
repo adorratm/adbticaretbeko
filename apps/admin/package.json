@@ -1,0 +1,33 @@
+{
+  "name": "@adb/admin",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start --port 3001",
+    "lint": "echo \"no lint yet\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@adb/api-client": "workspace:*",
+    "@adb/api-types": "workspace:*",
+    "@adb/ui": "workspace:*",
+    "@adb/validation": "workspace:*",
+    "echarts": "^6.1.0",
+    "echarts-for-react": "^3.0.6",
+    "next": "^16.3.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "socket.io-client": "4.8.1"
+  },
+  "devDependencies": {
+    "@adb/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.20.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3"
+  }
+}

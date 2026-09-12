@@ -1,0 +1,13 @@
+{
+  "name": "@adb/realtime",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}

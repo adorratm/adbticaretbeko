@@ -1,0 +1,29 @@
+{
+  "name": "adb-ticaret",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "smoke:checkout": "powershell -NoProfile -File scripts/smoke-checkout.ps1",
+    "sync:env": "powershell -NoProfile -File scripts/sync-env.ps1"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.12",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "yarn@4.18.0",
+  "volta": {
+    "node": "26.8.2",
+    "yarn": "4.18.0"
+  },
+  "engines": {
+    "node": ">=26"
+  }
+}

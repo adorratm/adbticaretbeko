@@ -1,0 +1,354 @@
+openapi: 3.0.3
+info:
+  title: ADB Ticaret Beko API
+  version: 0.3.0
+  description: Public API via gateway (commerce + payment providers + accounting stub)
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: Kullanıcı kaydı
+      responses:
+        "200": { description: Token çifti }
+  /api/v1/auth/login:
+    post:
+      summary: E-posta/şifre girişi (audience admin|customer)
+      responses:
+        "200": { description: Token çifti }
+  /api/v1/auth/google:
+    post:
+      summary: Google ID token ile giriş
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [idToken, audience]
+              properties:
+                idToken: { type: string }
+                audience: { type: string, enum: [customer, admin] }
+      responses:
+        "200": { description: Token çifti }
+        "403": { description: Admin allowlist dışı }
+  /api/v1/auth/logout:
+    post:
+      summary: Çıkış / refresh revoke
+      responses:
+        "200": { description: OK }
+  /api/v1/auth/forgot-password:
+    post:
+      summary: Şifre sıfırlama isteği
+      responses:
+        "200": { description: OK }
+  /api/v1/auth/reset-password:
+    post:
+      summary: Yeni şifre belirle
+      responses:
+        "200": { description: OK }
+  /api/v1/cms/home:
+    get:
+      summary: Vitrin içerik
+      responses:
+        "200": { description: Home CMS }
+  /api/v1/admin/cms/home:
+    put:
+      summary: Vitrin güncelle
+      responses:
+        "200": { description: Kaydedildi }
+  /api/v1/products:
+    get:
+      summary: Ürün listesi
+      responses:
+        "200": { description: Ürünler }
+  /api/v1/products/{slug}:
+    get:
+      summary: Ürün detay
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Ürün }
+  /api/v1/cart:
+    post:
+      summary: Sepet oluştur
+      responses:
+        "201": { description: Cart }
+  /api/v1/cart/{cartId}/items:
+    post:
+      summary: Sepete ekle
+      responses:
+        "200": { description: Cart }
+  /api/v1/checkout/preview:
+    post:
+      summary: Checkout önizleme
+      responses:
+        "200": { description: Totals }
+  /api/v1/checkout/create:
+    post:
+      summary: Pending sipariş + ödeme intent
+      responses:
+        "201": { description: Order and payment }
+  /api/v1/orders:
+    get:
+      summary: Sipariş listesi (admin pipeline)
+      responses:
+        "200": { description: Orders }
+  /api/v1/orders/{id}/status:
+    patch:
+      summary: Sipariş durum geçişi
+      responses:
+        "200": { description: Updated }
+  /api/v1/payments/provider:
+    get:
+      tags: [payments]
+      summary: Aktif PSP ve yapılandırma durumu
+      responses:
+        "200":
+          description: provider / configured / mode
+  /api/v1/payments:
+    post:
+      summary: Ödeme oluştur (provider=mock|iyzico|paytr)
+      responses:
+        "201": { description: Payment }
+  /api/v1/payments/webhook:
+    post:
+      summary: PSP webhook (HMAC + idempotent)
+      parameters:
+        - in: header
+          name: X-Payment-Signature
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+  /api/v1/payments/by-order/{orderId}:
+    get:
+      summary: Siparişe göre son ödeme
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Payment }
+  /api/v1/payments/{id}/simulate-success:
+    post:
+      summary: Dev — ödeme başarısını simüle et
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Order marked PAID }
+  /api/v1/payments/{id}/refund:
+    post:
+      summary: İade (provider RefundPayment + order CANCELLED)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount: { type: integer }
+                reason: { type: string }
+      responses:
+        "200": { description: Refunded }
+  /api/v1/cart/merge:
+    post:
+      summary: Misafir sepetini üye sepetine birleştir
+      responses:
+        "200": { description: Customer cart }
+  /api/v1/admin/products:
+    post:
+      summary: Ürün oluştur
+      responses:
+        "201": { description: Product }
+  /api/v1/admin/products/{id}:
+    patch:
+      summary: Ürün güncelle
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Product }
+    delete:
+      summary: Ürün sil
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+  /api/v1/search:
+    get:
+      summary: Ürün arama (Elasticsearch veya katalog fallback)
+      parameters:
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: category
+          schema: { type: string }
+      responses:
+        "200": { description: Hits }
+  /api/v1/promotions/coupons:
+    get:
+      summary: Kupon listesi
+      responses:
+        "200": { description: Coupons }
+    post:
+      summary: Kupon oluştur
+      responses:
+        "201": { description: Coupon }
+  /api/v1/promotions/coupons/{id}:
+    delete:
+      summary: Kupon sil
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+  /api/v1/accounting/invoices:
+    get:
+      summary: Fatura listesi (stub e-fatura)
+      responses:
+        "200": { description: Invoices }
+    post:
+      summary: Sipariş için fatura kes
+      responses:
+        "201": { description: Invoice }
+  /api/v1/accounting/invoices/{id}:
+    get:
+      summary: Fatura detay
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Invoice }
+  /api/v1/accounting/invoices/{id}/pdf:
+    get:
+      summary: Fatura PDF/stub metni
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: PDF stub }
+  /api/v1/marketplace/sync-jobs:
+    get:
+      summary: Marketplace sync job listesi
+      responses:
+        "200": { description: Jobs }
+  /api/v1/shipments:
+    post:
+      summary: Sevkiyat oluştur
+      responses:
+        "201": { description: Shipment }
+  /api/v1/notifications/send:
+    post:
+      summary: Bildirim gönder
+      responses:
+        "200": { description: Sent }
+  /api/v1/trade-ins:
+    post:
+      summary: Takas ön teklifi oluştur
+      responses:
+        "201": { description: Offer }
+    get:
+      summary: Takas tekliflerini listele
+      responses:
+        "200": { description: Offers }
+  /api/v1/trade-ins/{id}/status:
+    patch:
+      summary: Takas durumu güncelle
+      responses:
+        "200": { description: Updated }
+  /api/v1/bundles:
+    get:
+      summary: Çeyiz paketleri
+      responses:
+        "200": { description: Bundles }
+  /api/v1/storage-reservations:
+    post:
+      summary: Depolama rezervasyonu
+      responses:
+        "201": { description: Reservation }
+    get:
+      summary: Depolama listesi
+      responses:
+        "200": { description: Reservations }
+  /api/v1/warehouses:
+    get:
+      summary: Şube / depo listesi
+      responses:
+        "200": { description: Warehouses }
+  /api/v1/inventory/{variantId}:
+    get:
+      summary: Stok (şube kırılımı ile)
+      responses:
+        "200": { description: Inventory }
+  /api/v1/inventory/transfer:
+    post:
+      summary: Şubeler arası stok transferi
+      responses:
+        "200": { description: OK }
+  /api/v1/marketplace/status:
+    get:
+      summary: Pazaryeri adapter durumu (beko-erp|trendyol|hepsiburada)
+      parameters:
+        - in: query
+          name: provider
+          schema: { type: string }
+      responses:
+        "200": { description: Status + providers[] }
+  /api/v1/marketplace/sync:
+    post:
+      summary: Sync job tetikle
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string, enum: [products, stock, price, orders] }
+                provider: { type: string }
+                sku: { type: string }
+      responses:
+        "200": { description: Job }
+  /api/v1/marketplace/mappings:
+    get:
+      summary: SKU ↔ external_id eşlemeleri
+      responses:
+        "200": { description: Mappings }
+  /api/v1/reports/quotas:
+    get:
+      summary: Şube kota / prim
+      responses:
+        "200": { description: Quotas }
+  /api/v1/reports/incentives:
+    get:
+      summary: Teşvik kampanyaları
+      responses:
+        "200": { description: Incentives }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
