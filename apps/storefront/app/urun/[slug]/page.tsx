@@ -59,6 +59,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         description,
         url: `/urun/${product.slug}`,
         type: "website",
+        images: product.images?.[0]?.url
+          ? [{ url: product.images[0].url, alt: product.name }]
+          : undefined,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: product.name,
+        description,
+        images: product.images?.[0]?.url ? [product.images[0].url] : undefined,
       },
       other: {
         "product:brand": "Beko",
@@ -106,6 +115,14 @@ export default async function ProductPage({ params }: PageProps) {
   const dealerCode = cms?.store.dealerCode || "340982";
   const detail = product.detail;
   const energy = detail?.energyClass || "B";
+  const site = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const productUrl = `${site}/urun/${product.slug}`;
+  const primaryImage =
+    Array.isArray(product.images) && product.images[0]
+      ? String((product.images[0] as { url?: string }).url || "")
+      : "";
+  const storeAddress = cms?.store.address || "Türkiye";
+  const branches = parseBranches(cms?.store.branches);
 
   let related: Array<{
     id: string;
@@ -167,16 +184,62 @@ export default async function ProductPage({ params }: PageProps) {
             "@type": "Product",
             name: product.name,
             sku: product.sku,
+            image: primaryImage ? [primaryImage] : undefined,
             description: product.shortDescription || product.description || product.name,
             brand: { "@type": "Brand", name: "Beko" },
             offers: {
               "@type": "Offer",
-              url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/urun/${product.slug}`,
+              url: productUrl,
               priceCurrency: "TRY",
               price: amount > 0 ? (amount / 100).toFixed(2) : undefined,
               availability: saleable > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
               seller: { "@type": "Organization", name: "ADB Ticaret Beko Yetkili Satıcısı" },
             },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: site },
+              { "@type": "ListItem", position: 2, name: "Kategoriler", item: `${site}/kategori` },
+              { "@type": "ListItem", position: 3, name: product.name, item: productUrl },
+            ],
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: "ADB Ticaret Beko Yetkili Satıcısı",
+            image: `${site}/icon.svg`,
+            telephone: phone,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: storeAddress,
+              addressCountry: "TR",
+            },
+            url: site,
+            areaServed: "TR",
+            department: branches.slice(0, 5).map((b) => ({
+              "@type": "LocalBusiness",
+              name: b.name,
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: b.address || b.name,
+                addressLocality: b.district || b.city || undefined,
+                addressRegion: b.city || undefined,
+                addressCountry: "TR",
+              },
+              telephone: b.phone || phone,
+            })),
           }),
         }}
       />

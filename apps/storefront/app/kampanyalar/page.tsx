@@ -1,8 +1,20 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ProductCard } from "@adb/ui";
 import { createApiClient } from "@adb/api-client";
 import { StorefrontShell } from "../../components/site-shell";
 import { DealCountdown } from "../../components/deal-countdown";
+
+export const metadata: Metadata = {
+  title: "Kampanyalar",
+  description: "Beko takas, çeyiz ve taksit kampanyaları — ADB Ticaret yetkili satıcı.",
+  alternates: { canonical: "/kampanyalar" },
+  openGraph: {
+    title: "Kampanyalar | ADB Ticaret Beko",
+    description: "Takas desteği, çeyiz paketleri ve peşin fiyatına taksit fırsatları.",
+    url: "/kampanyalar",
+  },
+};
 
 const HERO =
   "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1400&q=80";

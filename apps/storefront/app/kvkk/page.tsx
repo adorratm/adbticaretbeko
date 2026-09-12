@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { StorefrontShell } from "../../components/site-shell";
+
+export const metadata: Metadata = {
+  title: "KVKK Aydınlatma Metni",
+  description: "ADB Ticaret kişisel verilerin korunması ve işlenmesi hakkında aydınlatma metni.",
+  alternates: { canonical: "/kvkk" },
+  robots: { index: true, follow: true },
+};
 
 function LegalLayout({
   eyebrow,

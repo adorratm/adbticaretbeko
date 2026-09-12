@@ -6,8 +6,8 @@ Monorepo: Next.js (storefront + admin) + Go mikroservisleri. Tek Hetzner sunucud
 
 - [Volta](https://volta.sh) (Node/Yarn pin)
 - Node + Yarn (`package.json` volta alanı)
-- Go 1.24+
-- Docker / Docker Compose
+- Go 1.27+
+- Docker / Docker Compose (Postgres 18, Redis 8, …)
 
 ## Hızlı başlangıç
 

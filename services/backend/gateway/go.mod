@@ -1,6 +1,6 @@
 module github.com/adbticaret/adbticaretbeko/services/backend/gateway
 
-go 1.24
+go 1.27
 
 require github.com/adbticaret/adbticaretbeko/shared v0.0.0
 

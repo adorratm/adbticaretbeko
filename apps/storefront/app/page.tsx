@@ -215,6 +215,41 @@ export default async function HomePage() {
         dealerCode,
       }}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "ADB Ticaret Beko yetkili satıcı mı?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Evet. ADB Ticaret Beko yetkili satıcısıdır; orijinal ürün, resmi garanti ve ücretsiz montaj sunar.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Montaj ücretsiz mi?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Çoğu üründe yetkili servis montajı ücretsizdir. Ürün sayfasında montaj bilgisini kontrol edin.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Takas kampanyası nasıl çalışır?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Eski beyaz eşyanızı getirerek yeni Beko ürününde peşin indirim alabilirsiniz. Detaylar /takas sayfasındadır.",
+                },
+              },
+            ],
+          }),
+        }}
+      />
       <main>
         <section className="adb-beko-hero">
           <div className="adb-beko-hero-media" style={{ backgroundImage: `url(${HERO_IMG})` }} aria-hidden />

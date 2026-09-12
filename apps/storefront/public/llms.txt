@@ -1,0 +1,24 @@
+# ADB Ticaret Beko
+
+> Beko yetkili satıcısı e-ticaret mağazası. Orijinal ürün, ücretsiz montaj, resmi garanti.
+
+## Site
+
+- Ana sayfa: /
+- Kategoriler: /kategori
+- Kampanyalar: /kampanyalar
+- Ürün arama: /arama?q=
+- Takas: /takas
+- Çeyiz: /ceyiz
+- Sitemap: /sitemap.xml
+
+## İletişim
+
+- Marka: ADB Ticaret — Beko Yetkili Satıcısı
+- Dil: tr-TR
+- Para birimi: TRY
+
+## Notlar
+
+- Müşteri hesabı, sepet ve ödeme sayfaları indeks dışıdır.
+- Ürün sayfalarında schema.org/Product ve LocalBusiness (mağaza) JSON-LD kullanılır.

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ADB Ticaret Beko">
+  <rect width="512" height="512" rx="96" fill="#0056b3"/>
+  <path fill="#ffffff" d="M128 152h168c52 0 88 28 88 76 0 34-18 58-48 70 36 12 58 40 58 78 0 52-40 84-98 84H128V152zm72 60v56h72c22 0 36-12 36-28s-14-28-36-28H200zm0 112v64h88c26 0 42-14 42-34s-16-30-42-30H200z"/>
+  <circle cx="392" cy="152" r="28" fill="#00a3e0"/>
+</svg>

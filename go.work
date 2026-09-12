@@ -1,27 +1,27 @@
-go 1.24
+go 1.27
 
 use (
-	./shared/go
-	./services/backend/gateway
+	./services/backend/accounting
 	./services/backend/auth
-	./services/backend/customer
-	./services/backend/catalog
-	./services/backend/inventory
-	./services/backend/pricing
-	./services/backend/promotion
 	./services/backend/cart
+	./services/backend/catalog
 	./services/backend/checkout
+	./services/backend/cms
+	./services/backend/customer
+	./services/backend/gateway
+	./services/backend/inventory
+	./services/backend/marketplace
+	./services/backend/notification
 	./services/backend/order
 	./services/backend/payment
-	./services/backend/shipment
-	./services/backend/notification
-	./services/backend/search
-	./services/backend/review
-	./services/backend/wishlist
-	./services/backend/marketplace
-	./services/backend/accounting
+	./services/backend/pricing
+	./services/backend/promotion
 	./services/backend/reporting
-	./services/backend/worker
-	./services/backend/cms
 	./services/backend/retail
+	./services/backend/review
+	./services/backend/search
+	./services/backend/shipment
+	./services/backend/wishlist
+	./services/backend/worker
+	./shared/go
 )

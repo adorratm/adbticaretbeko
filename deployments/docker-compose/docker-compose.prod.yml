@@ -1,5 +1,60 @@
 # Extends root compose with all Go services + frontends for single-host (Hetzner) deploy.
 services:
+  storefront:
+    build:
+      context: ../..
+      dockerfile: apps/storefront/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost/api}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost}
+      NEXT_PUBLIC_REALTIME_URL: ${NEXT_PUBLIC_REALTIME_URL:-http://localhost}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    stop_grace_period: 25s
+
+  admin:
+    build:
+      context: ../..
+      dockerfile: apps/admin/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost/api}
+      NEXT_PUBLIC_SITE_URL: ${ADMIN_URL:-http://localhost:3001}
+      NEXT_PUBLIC_REALTIME_URL: ${NEXT_PUBLIC_REALTIME_URL:-http://localhost}
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    stop_grace_period: 25s
+
+  realtime:
+    image: node:26-alpine
+    working_dir: /app
+    volumes:
+      - ../../services/realtime:/app
+    command: ["node", "server.mjs"]
+    environment:
+      REALTIME_PORT: "8102"
+      REALTIME_INTERNAL_SECRET: ${REALTIME_INTERNAL_SECRET:-adb-dev-realtime}
+    expose:
+      - "8102"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8102/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    stop_grace_period: 20s
+
   gateway:
     build:
       context: ../..
@@ -30,6 +85,13 @@ services:
       CMS_URL: http://cms:8100
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    stop_grace_period: 20s
     depends_on:
       - auth
       - customer
@@ -37,6 +99,7 @@ services:
       - retail
       - marketplace
       - reporting
+      - realtime
 
   auth:
     build:
@@ -283,21 +346,4 @@ services:
     depends_on:
       - nats
       - postgres
-
-  storefront:
-    build:
-      context: ../..
-      dockerfile: apps/storefront/Dockerfile
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost/api}
-    ports:
-      - "3000:3000"
-
-  admin:
-    build:
-      context: ../..
-      dockerfile: apps/admin/Dockerfile
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost/api}
-    ports:
-      - "3001:3001"
+    stop_grace_period: 20s

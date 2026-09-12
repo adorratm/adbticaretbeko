@@ -34,12 +34,18 @@ export default function FavoritesPage() {
       base.map(async (it) => {
         if (!it.productSlug) return it;
         try {
-          const p = await api.products.get(it.productSlug);
+          const p = await api.products.getBySlug(it.productSlug);
           const img = Array.isArray(p.images) && p.images[0] ? String((p.images[0] as { url?: string }).url || "") : "";
+          let price = it.price;
+          try {
+            price = (await api.pricing.get(p.id)).amount;
+          } catch {
+            /* keep wishlist price */
+          }
           return {
             ...it,
             imageUrl: img || it.imageUrl,
-            price: typeof p.price === "number" ? p.price : it.price,
+            price,
             productName: p.name || it.productName,
             sku: p.sku || it.sku,
           };

@@ -118,7 +118,7 @@ Backend is written in Go.
 
 Recommended:
 
--   Go 1.24+
+-   Go 1.27+
 -   REST/JSON for public HTTP APIs
 -   gRPC for internal service-to-service calls where useful
 -   PostgreSQL

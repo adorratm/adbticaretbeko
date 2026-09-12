@@ -21,12 +21,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/ceyiz",
     "/arama",
     "/kargo-takip",
+    "/kvkk",
+    "/mesafeli-satis",
+    "/cerez-politikasi",
+    "/iade-iptal",
+    "/llms.txt",
     ...categories.map((c) => `/kategori/${c}`),
   ].map((path) => ({
     url: `${siteUrl}${path || "/"}`,
     lastModified: new Date(),
     changeFrequency: path === "" ? "daily" : "weekly",
-    priority: path === "" ? 1 : 0.7,
+    priority: path === "" ? 1 : path.startsWith("/kategori") || path.startsWith("/urun") ? 0.8 : 0.6,
   }));
 
   let productRoutes: MetadataRoute.Sitemap = [];
