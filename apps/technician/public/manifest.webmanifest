@@ -1,0 +1,17 @@
+{
+  "name": "Beko Servis — ADB Teknisyen",
+  "short_name": "Beko Servis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef6fb",
+  "theme_color": "#0083BE",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

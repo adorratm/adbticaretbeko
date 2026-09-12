@@ -46,7 +46,7 @@ export function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0, maxHeight: 320, preferUp: false });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -69,7 +69,16 @@ export function SearchableSelect({
     const el = triggerRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    setPos({ top: r.bottom + 6, left: r.left, width: r.width });
+    const width = Math.min(Math.max(r.width, 200), window.innerWidth - 16);
+    const spaceBelow = window.innerHeight - r.bottom - 12;
+    const spaceAbove = r.top - 12;
+    const preferUp = spaceBelow < 220 && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(160, Math.min(320, preferUp ? spaceAbove : spaceBelow, window.innerHeight * 0.5));
+    let left = r.left;
+    if (left + width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - width - 8);
+    if (left < 8) left = 8;
+    const top = preferUp ? Math.max(8, r.top - 6 - maxHeight) : r.bottom + 6;
+    setPos({ top, left, width, maxHeight, preferUp });
   }
 
   useLayoutEffect(() => {
@@ -147,6 +156,7 @@ export function SearchableSelect({
               top: pos.top,
               left: pos.left,
               width: Math.max(pos.width, 200),
+              maxHeight: pos.maxHeight,
               zIndex: 10050,
             }}
             role="presentation"

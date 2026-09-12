@@ -9,7 +9,7 @@ export function ProductCard({
   listPriceLabel,
   energyClass,
   features,
-  promoLabel = "Stokta Var",
+  promoLabel = "Stokta",
   action,
   className,
 }: {
@@ -38,47 +38,59 @@ export function ProductCard({
 
   return (
     <article
-      className={["adb-card adb-animate-in", className].filter(Boolean).join(" ")}
-      style={{ overflow: "hidden", display: "flex", flexDirection: "column", padding: 14 }}
+      className={["adb-product-card adb-animate-in", className].filter(Boolean).join(" ")}
+      style={{
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        background: "#fff",
+        border: "1px solid var(--adb-border-subtle)",
+        borderRadius: "var(--adb-radius-lg)",
+        transition: "box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease",
+      }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            background: "rgba(16,185,129,0.15)",
-            color: "#065f46",
-            padding: "2px 8px",
-            borderRadius: 4,
-          }}
-        >
-          {promoLabel}
-        </span>
-        {energyClass ? (
-          <span className={energyTone}>ENERJİ: {energyClass}</span>
-        ) : null}
-      </div>
-      <a href={href} style={{ textDecoration: "none", color: "inherit", display: "block", flex: 1 }}>
+      <a href={href} style={{ textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column", flex: 1 }}>
         <div
           style={{
             position: "relative",
             aspectRatio: "1",
-            background: "var(--adb-surface-low)",
-            borderRadius: 8,
+            background: "linear-gradient(180deg, #f7fafc 0%, #eef3f7 100%)",
             display: "grid",
             placeItems: "center",
             overflow: "hidden",
-            marginBottom: 10,
           }}
         >
+          {promoLabel ? (
+            <span
+              style={{
+                position: "absolute",
+                top: 12,
+                left: 12,
+                zIndex: 1,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.02em",
+                background: "var(--adb-primary)",
+                color: "#fff",
+                padding: "4px 10px",
+                borderRadius: 2,
+              }}
+            >
+              {promoLabel}
+            </span>
+          ) : null}
+          {energyClass ? (
+            <span className={energyTone} style={{ position: "absolute", top: 12, right: 12, zIndex: 1 }}>
+              {energyClass}
+            </span>
+          ) : null}
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={imageUrl}
               alt={title}
-              style={{ maxWidth: "88%", maxHeight: "88%", objectFit: "contain", transition: "transform 0.25s ease" }}
+              className="adb-product-card-img"
+              style={{ maxWidth: "78%", maxHeight: "78%", objectFit: "contain", transition: "transform 0.35s ease" }}
             />
           ) : (
             <span className="material-symbols-outlined" style={{ fontSize: 48, color: "var(--adb-outline)" }}>
@@ -86,46 +98,49 @@ export function ProductCard({
             </span>
           )}
         </div>
-        <div style={{ fontSize: 11, color: "var(--adb-outline)", fontFamily: "ui-monospace, monospace", letterSpacing: "0.02em" }}>
-          {sku}
-        </div>
-        <h3
-          style={{
-            margin: "4px 0 8px",
-            fontSize: 14,
-            fontWeight: 700,
-            lineHeight: 1.35,
-            minHeight: "2.7em",
-            color: "var(--adb-on-surface)",
-          }}
-        >
-          {title}
-        </h3>
-        {features?.length ? (
-          <ul style={{ margin: "0 0 10px", padding: 0, listStyle: "none", color: "var(--adb-muted)", fontSize: 12 }}>
-            {features.slice(0, 3).map((f) => (
-              <li key={f} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 14, color: "var(--adb-primary-container)" }}>
-                  check_circle
-                </span>
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        <div>
-          {listPriceLabel ? (
-            <div style={{ fontSize: 12, color: "var(--adb-outline)", textDecoration: "line-through" }}>{listPriceLabel}</div>
+        <div style={{ padding: "14px 16px 16px", display: "flex", flexDirection: "column", flex: 1 }}>
+          <div style={{ fontSize: 11, color: "var(--adb-outline)", letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 600 }}>
+            {sku}
+          </div>
+          <h3
+            style={{
+              margin: "6px 0 10px",
+              fontSize: 15,
+              fontWeight: 650,
+              lineHeight: 1.35,
+              minHeight: "2.7em",
+              color: "var(--adb-on-surface)",
+              fontFamily: "var(--adb-font-display)",
+            }}
+          >
+            {title}
+          </h3>
+          {features?.length ? (
+            <ul style={{ margin: "0 0 12px", padding: 0, listStyle: "none", color: "var(--adb-muted)", fontSize: 12 }}>
+              {features.slice(0, 2).map((f) => (
+                <li key={f} style={{ display: "flex", gap: 6, alignItems: "flex-start", marginBottom: 4 }}>
+                  <span style={{ color: "var(--adb-primary)", fontWeight: 700 }}>·</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
           ) : null}
-          {priceLabel ? (
-            <>
-              <div className="adb-price">{priceLabel}</div>
-              <div style={{ fontSize: 11, color: "var(--adb-muted)" }}>(KDV Dahil)</div>
-            </>
-          ) : null}
+          <div style={{ marginTop: "auto" }}>
+            {listPriceLabel ? (
+              <div style={{ fontSize: 12, color: "var(--adb-outline)", textDecoration: "line-through" }}>{listPriceLabel}</div>
+            ) : null}
+            {priceLabel ? (
+              <>
+                <div className="adb-price" style={{ color: "var(--adb-primary-deep)", fontFamily: "var(--adb-font-display)" }}>
+                  {priceLabel}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--adb-muted)" }}>KDV dahil</div>
+              </>
+            ) : null}
+          </div>
         </div>
       </a>
-      {action ? <div style={{ marginTop: 12 }}>{action}</div> : null}
+      {action ? <div style={{ padding: "0 16px 16px" }}>{action}</div> : null}
     </article>
   );
 }

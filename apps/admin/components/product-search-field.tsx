@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createAdminApi } from "./admin-shell";
 
 export type SearchHit = {
@@ -33,16 +34,43 @@ export function ProductSearchField({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [backend, setBackend] = useState("");
+  const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
   const boxRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const api = useMemo(() => createAdminApi(), []);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (valueLabel) setQ(valueLabel);
   }, [valueLabel]);
 
+  function updatePos() {
+    const el = inputRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setPos({ top: r.bottom + 6, left: r.left, width: r.width });
+  }
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePos();
+    const onScroll = () => updatePos();
+    window.addEventListener("resize", onScroll);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, [open, hits.length]);
+
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (!boxRef.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (boxRef.current?.contains(t)) return;
+      if ((e.target as HTMLElement)?.closest?.("[data-adb-product-search-portal]")) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -97,9 +125,73 @@ export function ProductSearchField({
     return () => window.clearTimeout(t);
   }, [q, api]);
 
+  const panel =
+    open && mounted && hits.length > 0
+      ? createPortal(
+          <ul
+            data-adb-product-search-portal
+            style={{
+              position: "fixed",
+              top: pos.top,
+              left: pos.left,
+              width: Math.max(pos.width, 240),
+              zIndex: 10050,
+              margin: 0,
+              padding: 6,
+              listStyle: "none",
+              background: "#fff",
+              border: "1px solid var(--adb-border-subtle)",
+              borderRadius: 10,
+              boxShadow: "0 12px 32px rgba(17, 28, 45, 0.12), 0 2px 8px rgba(17, 28, 45, 0.06)",
+              maxHeight: "min(320px, 50vh)",
+              overflow: "auto",
+            }}
+          >
+            {hits.map((h) => (
+              <li key={h.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQ(`${h.name} (${h.sku})`);
+                    setOpen(false);
+                    onSelect(h);
+                  }}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    border: "none",
+                    background: "transparent",
+                    padding: "10px 10px",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    display: "grid",
+                    gap: 2,
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "var(--adb-surface-low)";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                  }}
+                >
+                  <span style={{ fontWeight: 650, fontSize: 13, overflowWrap: "anywhere" }}>{h.name}</span>
+                  <span style={{ fontSize: 11, color: "var(--adb-muted)", overflowWrap: "anywhere" }}>
+                    {h.sku}
+                    {h.categoryName ? ` · ${h.categoryName}` : ""}
+                    {h.status ? ` · ${h.status}` : ""}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>,
+          document.body,
+        )
+      : null;
+
   return (
     <div ref={boxRef} className={className} style={{ position: "relative", display: "grid", gap: 6 }}>
       <input
+        ref={inputRef}
         className="adb-input"
         value={q}
         placeholder={placeholder}
@@ -138,64 +230,7 @@ export function ProductSearchField({
       ) : backend ? (
         <div style={{ fontSize: 11, color: "var(--adb-muted)" }}>Motor: {backend}</div>
       ) : null}
-
-      {open && hits.length > 0 ? (
-        <ul
-          style={{
-            position: "absolute",
-            zIndex: 40,
-            top: "100%",
-            left: 0,
-            right: 0,
-            margin: "4px 0 0",
-            padding: 6,
-            listStyle: "none",
-            background: "#fff",
-            border: "1px solid var(--adb-border-subtle)",
-            borderRadius: 10,
-            boxShadow: "var(--adb-shadow-hover)",
-            maxHeight: 260,
-            overflow: "auto",
-          }}
-        >
-          {hits.map((h) => (
-            <li key={h.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  setQ(`${h.name} (${h.sku})`);
-                  setOpen(false);
-                  onSelect(h);
-                }}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  border: "none",
-                  background: "transparent",
-                  padding: "10px 10px",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  display: "grid",
-                  gap: 2,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "var(--adb-surface-low)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                }}
-              >
-                <span style={{ fontWeight: 650, fontSize: 13 }}>{h.name}</span>
-                <span style={{ fontSize: 11, color: "var(--adb-muted)" }}>
-                  {h.sku}
-                  {h.categoryName ? ` · ${h.categoryName}` : ""}
-                  {h.status ? ` · ${h.status}` : ""}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {panel}
     </div>
   );
 }

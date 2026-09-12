@@ -3,15 +3,18 @@
 import { useState } from "react";
 import { Button } from "@adb/ui";
 import { createStoreApi, getCartId, setCartId } from "../lib/store-api";
+import { emitCartChanged, fetchCartItemCount } from "../lib/cart-events";
 
 export function AddToCartButton({
   productId,
+  productSlug,
   sku,
   name,
   unitPrice,
   variantId,
 }: {
   productId: string;
+  productSlug?: string;
   sku: string;
   name: string;
   unitPrice: number;
@@ -35,11 +38,14 @@ export function AddToCartButton({
       await api.cart.addItem(cartId, {
         variantId: vid,
         productId,
+        productSlug,
         name,
         sku,
         qty: 1,
         unitPrice,
       });
+      const count = await fetchCartItemCount();
+      emitCartChanged({ count });
       setMsg("Sepete eklendi");
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Hata");

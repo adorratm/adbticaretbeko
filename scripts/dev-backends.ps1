@@ -62,9 +62,31 @@ foreach ($svc in $services) {
   $errLog = Join-Path $logDir "$($svc.Name).err.log"
   Write-Host "[start] $($svc.Name) $($svc.Addr)"
   $env:HTTP_ADDR = $svc.Addr
-  if ($svc.Name -eq "search") { $env:CATALOG_URL = "http://localhost:8083" }
+  if ($svc.Name -eq "search") {
+    $env:CATALOG_URL = "http://localhost:8083"
+    if (-not $env:ELASTICSEARCH_URL) { $env:ELASTICSEARCH_URL = "http://localhost:9200" }
+  }
   Start-Process -FilePath "go" -ArgumentList @("run", $svc.Cmd) -WorkingDirectory $work `
     -WindowStyle Hidden -RedirectStandardOutput $outLog -RedirectStandardError $errLog
 }
 
+# Realtime (socket.io) — separate Node process
+$rtDir = Join-Path $Root "services/realtime"
+$rtPort = 8102
+$rtExisting = Get-NetTCPConnection -LocalPort $rtPort -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($rtExisting) {
+  Write-Host "[skip] realtime already on $rtPort"
+} elseif (Test-Path (Join-Path $rtDir "server.mjs")) {
+  Write-Host "[start] realtime :$rtPort"
+  if (-not $env:REALTIME_INTERNAL_SECRET) { $env:REALTIME_INTERNAL_SECRET = "adb-dev-realtime" }
+  $env:REALTIME_PORT = "$rtPort"
+  $rtOut = Join-Path $logDir "realtime.out.log"
+  $rtErr = Join-Path $logDir "realtime.err.log"
+  Start-Process -FilePath "node" -ArgumentList @("server.mjs") -WorkingDirectory $rtDir `
+    -WindowStyle Hidden -RedirectStandardOutput $rtOut -RedirectStandardError $rtErr
+} else {
+  Write-Host "[skip] realtime (services/realtime missing)"
+}
+
 Write-Host "Done. Logs: $logDir"
+Write-Host "Tip: ES icin 'make search-infra' sonra 'make search-reindex'"

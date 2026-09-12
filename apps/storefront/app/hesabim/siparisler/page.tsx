@@ -15,7 +15,32 @@ type OrderRow = {
   district?: string;
   createdAt?: string;
   montageStatus?: string;
+  deliveryType?: string;
 };
+
+function chipKind(status: string): "montage" | "delivered" | "preparing" {
+  if (status.includes("MONTAJ") || status.includes("KESIF")) return "montage";
+  if (status === "DELIVERED" || status === "MONTAJ_TAMAMLANDI") return "delivered";
+  return "preparing";
+}
+
+function statusLabel(status: string) {
+  const map: Record<string, string> = {
+    PAYMENT_PENDING: "Ödeme bekleniyor",
+    PAID: "Ödendi",
+    PROCESSING: "Hazırlanıyor",
+    PACKED: "Paketlendi",
+    SHIPPED: "Kargoda",
+    DELIVERED: "Teslim edildi",
+    MONTAJ_BEKLIYOR: "Montaj bekliyor",
+    MONTAJ_RANDEVU: "Montaj randevusu",
+    MONTAJ_YOLDA: "Teknisyen yolda",
+    MONTAJ_TAMAMLANDI: "Montaj tamam",
+    KESIF_BEKLIYOR: "Keşif bekliyor",
+    CANCELLED: "İptal",
+  };
+  return map[status] || status;
+}
 
 export default function AccountOrdersPage() {
   const [items, setItems] = useState<OrderRow[]>([]);
@@ -47,6 +72,7 @@ export default function AccountOrdersPage() {
             district: o.district ? String(o.district) : undefined,
             createdAt: o.createdAt ? String(o.createdAt) : undefined,
             montageStatus: o.montageStatus ? String(o.montageStatus) : undefined,
+            deliveryType: o.deliveryType ? String(o.deliveryType) : undefined,
           })),
         );
       })
@@ -61,7 +87,16 @@ export default function AccountOrdersPage() {
     setBusyId(order.id);
     setMsg("");
     try {
-      const inv = await createStoreApi().accounting.createInvoice({
+      const api = createStoreApi();
+      const list = await api.accounting.listInvoices().catch(() => ({ items: [] as Array<Record<string, unknown>> }));
+      const existing = (list.items || []).find((i) => String(i.orderId) === order.id);
+      if (existing?.pdfUrl) {
+        window.open(String(existing.pdfUrl), "_blank", "noopener,noreferrer");
+        setTone("success");
+        setMsg(`Fatura ${String(existing.number || "")} açıldı`);
+        return;
+      }
+      const inv = await api.accounting.createInvoice({
         orderId: order.id,
         amount: order.total || 1,
         customerName: "Musteri",
@@ -89,55 +124,73 @@ export default function AccountOrdersPage() {
       {loading ? (
         <p style={{ color: "var(--adb-muted)" }}>Yükleniyor…</p>
       ) : items.length === 0 ? (
-        <div className="adb-card" style={{ padding: 28, textAlign: "center" }}>
-          <p style={{ color: "var(--adb-muted)" }}>Henüz siparişiniz yok.</p>
-          <Link href="/arama" className="adb-btn adb-btn-primary" style={{ textDecoration: "none" }}>
-            Alışverişe başla
-          </Link>
+        <div className="adb-card adb-animate-in" style={{ padding: 36, textAlign: "center" }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 48, color: "var(--adb-primary)" }}>
+            package_2
+          </span>
+          <h3 style={{ fontFamily: "var(--adb-font-display)", marginBottom: 8 }}>Henüz siparişiniz yok</h3>
+          <p style={{ color: "var(--adb-muted)", maxWidth: 420, margin: "0 auto 18px" }}>
+            İlk siparişinizde kargo, montaj randevusu ve fatura takibini buradan yönetirsiniz.
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/arama" className="adb-btn adb-btn-primary" style={{ textDecoration: "none" }}>
+              Alışverişe başla
+            </Link>
+            <Link href="/takas" className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
+              Takas teklifi
+            </Link>
+          </div>
         </div>
       ) : (
-        <div className="adb-card" style={{ overflow: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead style={{ background: "var(--adb-surface-low)", textAlign: "left" }}>
-              <tr>
-                <th style={{ padding: 12 }}>Tarih</th>
-                <th style={{ padding: 12 }}>Ürün</th>
-                <th style={{ padding: 12 }}>Tutar</th>
-                <th style={{ padding: 12 }}>Durum</th>
-                <th style={{ padding: 12 }}>Fatura</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((o) => (
-                <tr key={o.id} style={{ borderTop: "1px solid var(--adb-border-subtle)" }}>
-                  <td style={{ padding: 12, whiteSpace: "nowrap" }}>
-                    {o.createdAt ? new Date(o.createdAt).toLocaleDateString("tr-TR") : "—"}
-                  </td>
-                  <td style={{ padding: 12 }}>
-                    <div style={{ fontWeight: 600 }}>{o.productName || "Sipariş"}</div>
-                    <div style={{ fontSize: 11, color: "var(--adb-muted)" }}>{o.id.slice(0, 8)}…</div>
-                  </td>
-                  <td style={{ padding: 12, fontFeatureSettings: '"tnum" 1' }}>{formatTRY(o.total)}</td>
-                  <td style={{ padding: 12 }}>
-                    <StatusChip status={String(o.status).includes("MONTAJ") ? "montage" : "preparing"}>
-                      {o.status}
-                    </StatusChip>
-                  </td>
-                  <td style={{ padding: 12 }}>
-                    <Button
-                      type="button"
-                      variant="tertiary"
-                      style={{ height: 34, fontSize: 12 }}
-                      disabled={busyId === o.id || o.total <= 0}
-                      onClick={() => openInvoice(o)}
-                    >
-                      {busyId === o.id ? "…" : "Fatura"}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="adb-stagger" style={{ display: "grid", gap: 12 }}>
+          {items.map((o) => (
+            <article
+              key={o.id}
+              className="adb-card adb-animate-in"
+              style={{
+                padding: 18,
+                display: "grid",
+                gap: 14,
+                borderTop: "3px solid var(--adb-primary)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                <div>
+                  <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
+                    #{o.id.slice(0, 8)}
+                    {o.createdAt ? ` · ${new Date(o.createdAt).toLocaleDateString("tr-TR")}` : ""}
+                  </div>
+                  <h2 style={{ margin: "4px 0 0", fontSize: 17 }}>{o.productName || "Sipariş"}</h2>
+                  <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--adb-muted)" }}>
+                    {[o.district, o.deliveryType, o.montageStatus].filter(Boolean).join(" · ") || "Teslimat bilgisi güncellenecek"}
+                  </p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontWeight: 800, fontSize: 18, fontFeatureSettings: '"tnum" 1' }}>{formatTRY(o.total)}</div>
+                  <div style={{ marginTop: 8 }}>
+                    <StatusChip status={chipKind(o.status)}>{statusLabel(o.status)}</StatusChip>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <Link href={`/hesabim/siparisler/${o.id}`} className="adb-btn adb-btn-primary" style={{ height: 36, textDecoration: "none" }}>
+                  Detay & takip
+                </Link>
+                <Link href="/kargo-takip" className="adb-btn adb-btn-tertiary" style={{ height: 36, textDecoration: "none" }}>
+                  Kargo
+                </Link>
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  style={{ height: 36, fontSize: 13 }}
+                  disabled={busyId === o.id || o.total <= 0}
+                  onClick={() => openInvoice(o)}
+                >
+                  {busyId === o.id ? "…" : "Fatura"}
+                </Button>
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </AccountShell>

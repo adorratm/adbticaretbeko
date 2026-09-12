@@ -72,6 +72,7 @@ export type Cart = {
   items: Array<{
     variantId: string;
     productId?: string;
+    productSlug?: string;
     name: string;
     sku: string;
     qty: number;
@@ -535,6 +536,7 @@ export function createApiClient(options: ApiClientOptions) {
         item: {
           variantId: string;
           productId?: string;
+          productSlug?: string;
           name: string;
           sku: string;
           qty: number;
@@ -967,6 +969,17 @@ export function createApiClient(options: ApiClientOptions) {
       },
     },
     serviceTeams: {
+      directory() {
+        return request<{
+          items: Array<{
+            id: string;
+            warehouseCode: string;
+            name: string;
+            technician: string;
+            vehiclePlate: string;
+          }>;
+        }>(options, "/api/v1/service-teams/directory");
+      },
       list(warehouse?: string) {
         const q = warehouse ? `?warehouse=${encodeURIComponent(warehouse)}` : "";
         return request<{
@@ -1070,6 +1083,75 @@ export function createApiClient(options: ApiClientOptions) {
         return request(options, `/api/v1/service-routes/${encodeURIComponent(id)}`, {
           method: "DELETE",
         });
+      },
+    },
+    serviceJobs: {
+      list(params?: { warehouse?: string; status?: string; teamId?: string }) {
+        const qs = new URLSearchParams();
+        if (params?.warehouse) qs.set("warehouse", params.warehouse);
+        if (params?.status) qs.set("status", params.status);
+        if (params?.teamId) qs.set("teamId", params.teamId);
+        const q = qs.toString();
+        return request<{ items: Array<Record<string, unknown>> }>(
+          options,
+          `/api/v1/service-jobs${q ? `?${q}` : ""}`,
+        );
+      },
+      mine(teamId: string, pin: string) {
+        const qs = new URLSearchParams({ teamId, pin });
+        return request<{ items: Array<Record<string, unknown>>; teamId: string }>(
+          options,
+          `/api/v1/service-jobs/mine?${qs}`,
+        );
+      },
+      create(body: {
+        orderId: string;
+        teamId: string;
+        routeId?: string;
+        warehouseCode?: string;
+        notes?: string;
+        lat?: number;
+        lng?: number;
+      }) {
+        return request<{ id: string; orderId: string; teamId: string; status: string }>(
+          options,
+          "/api/v1/service-jobs",
+          { method: "POST", body: JSON.stringify(body) },
+        );
+      },
+      update(
+        id: string,
+        body: { status?: string; notes?: string; teamId?: string; pin?: string; lat?: number; lng?: number },
+      ) {
+        return request(options, `/api/v1/service-jobs/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        });
+      },
+      location(id: string, body: { teamId: string; pin: string; lat: number; lng: number }) {
+        return request(options, `/api/v1/service-jobs/${encodeURIComponent(id)}/location`, {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+      },
+      trail(id: string) {
+        return request<{
+          jobId: string;
+          trail: Array<{ lat: number; lng: number; at: string; source?: string }>;
+          planned: Array<{ seq: number; lat: number; lng: number; label: string; kind: string }>;
+        }>(options, `/api/v1/service-jobs/${encodeURIComponent(id)}/trail`);
+      },
+      createRoute(
+        id: string,
+        body?: {
+          waypoints?: Array<{ lat: number; lng: number; label?: string; kind?: string }>;
+        },
+      ) {
+        return request<{ ok: boolean; jobId: string }>(
+          options,
+          `/api/v1/service-jobs/${encodeURIComponent(id)}/route`,
+          { method: "POST", body: JSON.stringify(body || {}) },
+        );
       },
     },
     payments: {
@@ -1301,7 +1383,9 @@ export function createApiClient(options: ApiClientOptions) {
         orderId: string;
         amount: number;
         customerName?: string;
+        taxNo?: string;
         currency?: string;
+        taxRate?: number;
       }) {
         return request<{
           id: string;
@@ -1329,9 +1413,10 @@ export function createApiClient(options: ApiClientOptions) {
             netAmount?: number;
             status: string;
             eInvoiceStatus?: string;
-            eInvoiceUUID?: string;
+            eInvoiceUuid?: string;
             pdfUrl: string;
           }>;
+          eInvoiceProvider?: string;
         }>(options, "/api/v1/accounting/invoices");
       },
       getInvoice(id: string) {
@@ -1347,9 +1432,88 @@ export function createApiClient(options: ApiClientOptions) {
           netAmount?: number;
           status: string;
           eInvoiceStatus?: string;
-          eInvoiceUUID?: string;
+          eInvoiceUuid?: string;
           pdfUrl: string;
         }>(options, `/api/v1/accounting/invoices/${encodeURIComponent(id)}`);
+      },
+      cancelInvoice(id: string) {
+        return request(options, `/api/v1/accounting/invoices/${encodeURIComponent(id)}/cancel`, {
+          method: "POST",
+          body: "{}",
+        });
+      },
+      summary() {
+        return request<{
+          invoiceCount: number;
+          invoiceTotal: number;
+          vatCollected: number;
+          netSales: number;
+          income: number;
+          expense: number;
+          profit: number;
+          cashBalance: number;
+          bankBalance: number;
+          eInvoiceProvider?: string;
+        }>(options, "/api/v1/accounting/summary");
+      },
+      cashAccounts() {
+        return request<{
+          items: Array<{
+            id: string;
+            code: string;
+            name: string;
+            kind: string;
+            balance: number;
+            active: boolean;
+          }>;
+        }>(options, "/api/v1/accounting/cash-accounts");
+      },
+      ledger(params?: { kind?: string }) {
+        const qs = new URLSearchParams();
+        if (params?.kind) qs.set("kind", params.kind);
+        const q = qs.toString();
+        return request<{
+          items: Array<{
+            id: string;
+            entryDate: string;
+            kind: string;
+            category: string;
+            description: string;
+            amount: number;
+            partyName: string;
+            partyTaxNo?: string;
+            orderId?: string;
+            cashAccountId?: string;
+          }>;
+        }>(options, `/api/v1/accounting/ledger${q ? `?${q}` : ""}`);
+      },
+      createLedger(body: {
+        kind: "INCOME" | "EXPENSE" | "COLLECTION" | "PAYMENT";
+        amount: number;
+        category?: string;
+        description?: string;
+        partyName?: string;
+        partyTaxNo?: string;
+        cashAccountId?: string;
+        entryDate?: string;
+      }) {
+        return request<{ ok: boolean; id: string }>(options, "/api/v1/accounting/ledger", {
+          method: "POST",
+          body: JSON.stringify(body),
+        });
+      },
+      cari() {
+        return request<{
+          items: Array<{
+            partyName: string;
+            taxNo: string;
+            sales: number;
+            invoiceCount: number;
+            collected: number;
+            paid: number;
+            balance: number;
+          }>;
+        }>(options, "/api/v1/accounting/cari");
       },
     },
     reports: {

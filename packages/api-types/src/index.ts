@@ -3,6 +3,33 @@ export type Money = {
   currency: "TRY";
 };
 
+export type ProductFeature = {
+  title: string;
+  subtitle?: string;
+  body: string;
+  icon?: string;
+};
+
+export type ProductSpecGroup = {
+  title: string;
+  rows: Array<{ label: string; value: string }>;
+};
+
+export type ProductDocument = {
+  title: string;
+  lang?: string;
+  url: string;
+  kind?: string;
+};
+
+export type ProductDetail = {
+  energyClass?: string;
+  dimensions?: { width?: string; height?: string; depth?: string };
+  features?: ProductFeature[];
+  specGroups?: ProductSpecGroup[];
+  documents?: ProductDocument[];
+};
+
 export type ProductSummary = {
   id: string;
   sku: string;
@@ -13,6 +40,7 @@ export type ProductSummary = {
   shortDescription?: string;
   brandId?: string;
   categoryId?: string;
+  detail?: ProductDetail;
   images?: Array<{ id: string; productId: string; url: string; alt?: string; sortOrder?: number }>;
   variants?: Array<{
     id: string;

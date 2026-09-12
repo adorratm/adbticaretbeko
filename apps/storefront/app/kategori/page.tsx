@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createApiClient } from "@adb/api-client";
 import { StorefrontShell } from "../../components/site-shell";
+import { CATEGORY_IMAGES, categoryImage } from "../../lib/category-media";
 
 export const metadata: Metadata = {
   title: "Ürün Grupları",
@@ -58,63 +59,65 @@ export default async function CategoriesIndexPage() {
         dealerCode: cms?.store.dealerCode || "340982",
       }}
     >
-      <main className="adb-container" style={{ padding: "32px 24px 64px" }}>
-        <p style={{ fontSize: 13, color: "var(--adb-muted)", marginBottom: 12 }}>
-          <Link href="/">Ana Sayfa</Link> / <span style={{ color: "var(--adb-on-surface)", fontWeight: 600 }}>Ürün Grupları</span>
-        </p>
-        <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
-          Resmi Beko Kataloğu
-        </div>
-        <h1 className="adb-headline-lg" style={{ margin: "4px 0 8px" }}>
-          Tüm ürün grupları
-        </h1>
-        <p style={{ color: "var(--adb-muted)", maxWidth: 560, marginBottom: 28 }}>
-          Ana sayfadaki popüler kategorilerle aynı gruplar — orijinal stok, ücretsiz montaj ve resmi garanti.
-        </p>
-
-        <div
-          className="adb-stagger"
-          style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
-        >
-          {groups.map((g) => (
-            <Link
-              key={g.slug}
-              href={`/kategori/${g.slug}`}
-              className="adb-card"
-              style={{ padding: 20, textDecoration: "none", color: "inherit", display: "grid", gap: 10 }}
+      <main>
+        <section className="adb-page-hero" style={{ minHeight: "min(36vh, 320px)" }}>
+          <div
+            className="adb-page-hero-media"
+            style={{ backgroundImage: `url(${CATEGORY_IMAGES["ankastre-setler"]})` }}
+            aria-hidden
+          />
+          <div className="adb-container adb-page-hero-content">
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 10 }}>
+              <Link href="/" style={{ color: "inherit" }}>
+                Ana Sayfa
+              </Link>{" "}
+              / Ürün Grupları
+            </p>
+            <div className="adb-label-sm" style={{ color: "#7dd3fc" }}>
+              Resmi Beko kataloğu
+            </div>
+            <h1
+              style={{
+                margin: "6px 0 10px",
+                fontFamily: "var(--adb-font-display)",
+                fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
+                fontWeight: 700,
+                color: "#fff",
+                letterSpacing: "-0.03em",
+              }}
             >
-              <div
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: 14,
-                  background: "var(--adb-surface-low)",
-                  display: "grid",
-                  placeItems: "center",
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: 28, color: "var(--adb-primary)" }}>
-                  {g.icon}
-                </span>
-              </div>
-              <div style={{ fontWeight: 800, fontSize: 17 }}>{g.name}</div>
-              {g.tech ? (
-                <div style={{ fontSize: 13, color: "var(--adb-primary-container)", fontWeight: 600 }}>{g.tech}</div>
-              ) : null}
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--adb-muted)" }}>
-                {g.countHint || "İncele"} →
-              </div>
-            </Link>
-          ))}
-        </div>
+              Ürün grupları
+            </h1>
+            <p style={{ margin: 0, maxWidth: 520, color: "rgba(255,255,255,0.88)", lineHeight: 1.55 }}>
+              Yaşam alanınıza göre keşfedin — orijinal stok, ücretsiz montaj ve resmi garanti.
+            </p>
+          </div>
+        </section>
 
-        <div style={{ marginTop: 28, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Link href="/arama" className="adb-btn adb-btn-primary" style={{ textDecoration: "none" }}>
-            Tüm ürünlerde ara
-          </Link>
-          <Link href="/kampanyalar" className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
-            Kampanyalar
-          </Link>
+        <div className="adb-container" style={{ padding: "36px 24px 72px" }}>
+          <div className="adb-stagger" style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+            {groups.map((g) => (
+              <Link key={g.slug} href={`/kategori/${g.slug}`} className="adb-beko-cat" style={{ minHeight: 260 }}>
+                <div className="adb-beko-cat-media" style={{ backgroundImage: `url(${categoryImage(g.slug)})` }} />
+                <div className="adb-beko-cat-body" style={{ minHeight: 260 }}>
+                  <div style={{ fontFamily: "var(--adb-font-display)", fontWeight: 700, fontSize: 22 }}>{g.name}</div>
+                  {g.tech ? <div style={{ fontSize: 13, opacity: 0.9, marginTop: 6 }}>{g.tech}</div> : null}
+                  <div style={{ fontSize: 12, fontWeight: 700, marginTop: 12, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                    {g.countHint || "İncele"} →
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 36, display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Link href="/arama" className="adb-btn adb-btn-primary" style={{ textDecoration: "none" }}>
+              Tüm ürünlerde ara
+            </Link>
+            <Link href="/kampanyalar" className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
+              Kampanyalar
+            </Link>
+          </div>
         </div>
       </main>
     </StorefrontShell>

@@ -87,10 +87,25 @@ export default async function SearchPage({
             Arama
           </p>
           <h1 style={{ margin: 0, fontSize: 28 }}>{title}</h1>
-          <p style={{ color: "var(--adb-muted)", marginTop: 8 }}>
-            {error
-              ? error
-              : `${items.length} ürün bulundu${backend === "elasticsearch" ? " · Elasticsearch" : ""}`}
+          <p style={{ color: "var(--adb-muted)", marginTop: 8, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            {error ? (
+              error
+            ) : (
+              <>
+                <span>{items.length} ürün bulundu</span>
+                <span
+                  className="adb-badge"
+                  style={{
+                    textTransform: "none",
+                    letterSpacing: 0,
+                    background: backend === "elasticsearch" ? "var(--adb-primary-container)" : "var(--adb-surface-container)",
+                    color: backend === "elasticsearch" ? "#fff" : "var(--adb-muted)",
+                  }}
+                >
+                  {backend === "elasticsearch" ? "Elasticsearch" : "Katalog araması"}
+                </span>
+              </>
+            )}
           </p>
         </div>
 

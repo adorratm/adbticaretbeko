@@ -121,6 +121,7 @@ func main() {
 		{prefix: "/api/v1/orders", target: config.Getenv("ORDER_URL", "http://localhost:8089"), strip: "/api"},
 		{prefix: "/api/v1/service-teams", target: config.Getenv("ORDER_URL", "http://localhost:8089"), strip: "/api"},
 		{prefix: "/api/v1/service-routes", target: config.Getenv("ORDER_URL", "http://localhost:8089"), strip: "/api"},
+		{prefix: "/api/v1/service-jobs", target: config.Getenv("ORDER_URL", "http://localhost:8089"), strip: "/api"},
 		{prefix: "/api/v1/payments", target: config.Getenv("PAYMENT_URL", "http://localhost:8090"), strip: "/api"},
 		{prefix: "/api/v1/shipments", target: config.Getenv("SHIPMENT_URL", "http://localhost:8091"), strip: "/api"},
 		{prefix: "/api/v1/notifications", target: config.Getenv("NOTIFICATION_URL", "http://localhost:8092"), strip: "/api"},

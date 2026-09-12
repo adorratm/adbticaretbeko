@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Alert, Button } from "@adb/ui";
+import { Alert, Button, ProductCard } from "@adb/ui";
 import { getStoreUser, parseApiError } from "@adb/api-client";
 import { AccountShell } from "../../../components/account-shell";
-import { createStoreApi } from "../../../lib/store-api";
+import { createStoreApi, formatTRY } from "../../../lib/store-api";
 
 type WishItem = {
   id: string;
@@ -13,6 +13,8 @@ type WishItem = {
   productName: string;
   sku?: string;
   productSlug?: string;
+  imageUrl?: string;
+  price?: number;
 };
 
 export default function FavoritesPage() {
@@ -27,7 +29,26 @@ export default function FavoritesPage() {
       api.customers.ensure({ email: user?.email, firstName: "Müşteri", lastName: "-" }),
     );
     const res = await api.wishlist.list(profile.id);
-    setItems(res.items);
+    const base = (res.items || []) as WishItem[];
+    const enriched = await Promise.all(
+      base.map(async (it) => {
+        if (!it.productSlug) return it;
+        try {
+          const p = await api.products.get(it.productSlug);
+          const img = Array.isArray(p.images) && p.images[0] ? String((p.images[0] as { url?: string }).url || "") : "";
+          return {
+            ...it,
+            imageUrl: img || it.imageUrl,
+            price: typeof p.price === "number" ? p.price : it.price,
+            productName: p.name || it.productName,
+            sku: p.sku || it.sku,
+          };
+        } catch {
+          return it;
+        }
+      }),
+    );
+    setItems(enriched);
   }
 
   useEffect(() => {
@@ -60,31 +81,44 @@ export default function FavoritesPage() {
       {loading ? (
         <p style={{ color: "var(--adb-muted)" }}>Yükleniyor…</p>
       ) : items.length === 0 ? (
-        <div className="adb-card" style={{ padding: 28, textAlign: "center" }}>
-          <p style={{ color: "var(--adb-muted)" }}>Favori listeniz boş.</p>
-          <Link href="/arama" className="adb-btn adb-btn-primary" style={{ textDecoration: "none" }}>
-            Ürünlere göz at
-          </Link>
+        <div className="adb-card adb-animate-in" style={{ padding: 36, textAlign: "center" }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 48, color: "var(--adb-primary)" }}>
+            favorite
+          </span>
+          <h3 style={{ fontFamily: "var(--adb-font-display)", marginBottom: 8 }}>Favori listeniz boş</h3>
+          <p style={{ color: "var(--adb-muted)", maxWidth: 400, margin: "0 auto 18px" }}>
+            Beğendiğiniz Beko ürünlerini favorilere ekleyin; fiyat ve stok değişiminde hızlıca ulaşın.
+          </p>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/arama" className="adb-btn adb-btn-primary" style={{ textDecoration: "none" }}>
+              Ürün ara
+            </Link>
+            <Link href="/kampanyalar" className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
+              Kampanyalar
+            </Link>
+          </div>
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 10 }}>
+        <div className="adb-stagger" style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
           {items.map((it) => {
-            const href = it.productSlug ? `/urun/${it.productSlug}` : `/arama?q=${encodeURIComponent(it.sku || it.productName)}`;
+            const href = it.productSlug
+              ? `/urun/${it.productSlug}`
+              : `/arama?q=${encodeURIComponent(it.sku || it.productName)}`;
             return (
-              <div key={it.id} className="adb-card" style={{ padding: 14, display: "flex", justifyContent: "space-between", gap: 12 }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>{it.productName}</div>
-                  <div style={{ fontSize: 12, color: "var(--adb-muted)" }}>{it.sku}</div>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Link href={href} className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
-                    Gör
-                  </Link>
-                  <Button type="button" onClick={() => remove(it.productId)}>
+              <ProductCard
+                key={it.id}
+                href={href}
+                sku={it.sku || it.productId.slice(0, 8)}
+                title={it.productName}
+                imageUrl={it.imageUrl}
+                priceLabel={typeof it.price === "number" ? formatTRY(it.price) : undefined}
+                promoLabel="Favori"
+                action={
+                  <Button type="button" variant="tertiary" style={{ height: 36, width: "100%" }} onClick={() => remove(it.productId)}>
                     Kaldır
                   </Button>
-                </div>
-              </div>
+                }
+              />
             );
           })}
         </div>

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"strings"
 
@@ -31,6 +32,44 @@ type Category struct {
 	CountHint string  `json:"countHint,omitempty"`
 }
 
+type ProductFeature struct {
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle,omitempty"`
+	Body     string `json:"body"`
+	Icon     string `json:"icon,omitempty"`
+}
+
+type ProductSpecRow struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+type ProductSpecGroup struct {
+	Title string           `json:"title"`
+	Rows  []ProductSpecRow `json:"rows"`
+}
+
+type ProductDocument struct {
+	Title string `json:"title"`
+	Lang  string `json:"lang,omitempty"`
+	URL   string `json:"url"`
+	Kind  string `json:"kind,omitempty"`
+}
+
+type ProductDimensions struct {
+	Width  string `json:"width,omitempty"`
+	Height string `json:"height,omitempty"`
+	Depth  string `json:"depth,omitempty"`
+}
+
+type ProductDetail struct {
+	EnergyClass string             `json:"energyClass,omitempty"`
+	Dimensions  *ProductDimensions `json:"dimensions,omitempty"`
+	Features    []ProductFeature   `json:"features,omitempty"`
+	SpecGroups  []ProductSpecGroup `json:"specGroups,omitempty"`
+	Documents   []ProductDocument  `json:"documents,omitempty"`
+}
+
 type Product struct {
 	ID               string           `json:"id"`
 	SKU              string           `json:"sku"`
@@ -41,6 +80,7 @@ type Product struct {
 	Description      string           `json:"description,omitempty"`
 	ShortDescription string           `json:"shortDescription,omitempty"`
 	Status           string           `json:"status"`
+	Detail           *ProductDetail   `json:"detail,omitempty"`
 	Images           []ProductImage   `json:"images,omitempty"`
 	Variants         []ProductVariant `json:"variants,omitempty"`
 }
@@ -126,6 +166,12 @@ CREATE TABLE IF NOT EXISTS product_images (
     alt TEXT,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS product_details (
+    product_id UUID PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 `)
 	return err
@@ -528,7 +574,167 @@ func (s *Store) SeedDemo(ctx context.Context) error {
 			return err
 		}
 	}
-	return nil
+	return s.SeedProductDetails(ctx)
+}
+
+func (s *Store) SeedProductDetails(ctx context.Context) error {
+	rows, err := s.db.Query(ctx, `SELECT id, sku FROM products`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id, sku string
+		if err := rows.Scan(&id, &sku); err != nil {
+			return err
+		}
+		detail, ok := demoDetailForSKU(sku)
+		if !ok {
+			continue
+		}
+		if err := s.UpsertProductDetail(ctx, id, detail); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
+}
+
+func demoDetailForSKU(sku string) (ProductDetail, bool) {
+	switch sku {
+	case "B5RCNE505LXP":
+		return ProductDetail{
+			EnergyClass: "D",
+			Dimensions:  &ProductDimensions{Width: "78 cm", Height: "187 cm", Depth: "76 cm"},
+			Features: []ProductFeature{
+				{Title: "AeroFlow", Subtitle: "360 derece soğutma sistemi", Icon: "air", Body: "AeroFlow soğutma teknolojisi rafların üzerine doğrudan üfleme yapmaz; tazeliği dolabın tamamına yayar. Yiyecekler daha uzun süre taze kalır."},
+				{Title: "Multimode", Subtitle: "5 farklı kullanım modu", Icon: "tune", Body: "Dondurucu bölümünü soğutucu, dondurucu veya kapalı olarak kullanabilirsiniz. Soğutucu bölümünü de ihtiyaca göre kapatabilirsiniz."},
+				{Title: "HarvestFresh™", Subtitle: "Tazelik teknolojisi", Icon: "wb_sunny", Body: "Güneşten ilham alan 3 ışık teknolojisi, 24 saatlik doğal gün ışığı döngüsünü simüle ederek meyve ve sebzelerin vitamin değerlerini daha uzun korur."},
+				{Title: "EverFresh+", Subtitle: "Tazelik teknolojisi", Icon: "eco", Body: "Hassas nem kontrolü ile yeşil sebze ve meyveleri 3 kata kadar daha taze tutar; bozulma ve bayatlamayı geciktirir."},
+				{Title: "Kahvaltılık Çekmecesi", Icon: "kitchen", Body: "Kısa sürede tüketilecek et, balık ve kahvaltılık malzemelerin soğuk saklanması için ideal alan."},
+				{Title: "NutriFreeze", Subtitle: "Hassas dondurma teknolojisi", Icon: "ac_unit", Body: "Kırmızı et ve balık ürünlerini pişirmeye hazır ve daha uzun süre taze tutar; çözdürme ihtiyacını azaltır."},
+				{Title: "HomeWhiz", Subtitle: "Wi-Fi", Icon: "wifi", Body: "HomeWhiz ile akıllı beyaz eşyanızı Wi-Fi üzerinden uzaktan kontrol edin; durum bilgisini anlık takip edin."},
+				{Title: "ProSmart™ Inverter", Icon: "settings_motion_mode", Body: "Daha az enerjiyle hızlı soğutma, sessiz çalışma ve uzun ömürlü kompresör performansı."},
+				{Title: "Esnek Raflar", Icon: "view_agenda", Body: "Farklı boyuttaki yiyecek ve içecekler rahatça yerleştirilebilir."},
+			},
+			SpecGroups: []ProductSpecGroup{
+				{Title: "Genel Özellikler", Rows: []ProductSpecRow{
+					{Label: "Ürün Rengi", Value: "Dark Inox"},
+					{Label: "Dondurucu Yeri", Value: "Dondurucu Altta"},
+					{Label: "Kontrol Sistemi", Value: "Elektronik"},
+					{Label: "Tatil Modu", Value: "Var"},
+					{Label: "ProSmart™ Inverter Kompresör", Value: "Var"},
+					{Label: "Aydınlatma Tipi", Value: "Tavandan LED"},
+					{Label: "Kapı Yönü Değiştirme", Value: "Var"},
+					{Label: "Ses Seviyesi", Value: "35 dBA"},
+					{Label: "Toplam Hacim", Value: "505 L"},
+				}},
+				{Title: "Soğutucu Bölme", Rows: []ProductSpecRow{
+					{Label: "Soğutma Sistemi", Value: "No Frost"},
+					{Label: "EverFresh+ Teknolojisi", Value: "Var"},
+					{Label: "HarvestFresh™", Value: "Standard"},
+					{Label: "Soğutucu Bölme Hacmi", Value: "355 L"},
+					{Label: "Kahvaltılık Çekmecesi", Value: "Var"},
+				}},
+				{Title: "Dondurucu Bölme", Rows: []ProductSpecRow{
+					{Label: "Dondurucu Çekmece Sayısı", Value: "2"},
+					{Label: "Günlük Dondurma Kapasitesi", Value: "7 kg"},
+					{Label: "Dondurucu Bölme Hacmi", Value: "150 L"},
+				}},
+				{Title: "Tüketim Bilgileri", Rows: []ProductSpecRow{
+					{Label: "Enerji Sınıfı", Value: "D"},
+					{Label: "Yıllık Enerji Tüketimi", Value: "240 kWh"},
+				}},
+				{Title: "Ölçüler", Rows: []ProductSpecRow{
+					{Label: "Genişlik", Value: "78 cm"},
+					{Label: "Yükseklik", Value: "187 cm"},
+					{Label: "Derinlik", Value: "76 cm"},
+				}},
+			},
+			Documents: []ProductDocument{
+				{Title: "Dijital Kullanma Kılavuzu", Lang: "Türkçe", Kind: "manual", URL: "https://www.beko.com.tr/"},
+				{Title: "Enerji Etiketi", Lang: "Türkçe", Kind: "energy", URL: "https://www.beko.com.tr/"},
+				{Title: "Ürün Bilgi Formu", Lang: "Türkçe", Kind: "info", URL: "https://www.beko.com.tr/"},
+			},
+		}, true
+	case "B3T68230W":
+		return ProductDetail{
+			EnergyClass: "A",
+			Dimensions:  &ProductDimensions{Width: "60 cm", Height: "85 cm", Depth: "58 cm"},
+			Features: []ProductFeature{
+				{Title: "SteamCure™", Subtitle: "Buhar teknolojisi", Icon: "humidity_high", Body: "Buharla kırışıkları azaltır, hijyenik yıkama sunar."},
+				{Title: "ProSmart™ Inverter", Icon: "settings_motion_mode", Body: "Sessiz ve düşük enerjili motor teknolojisi."},
+				{Title: "Bluetooth", Icon: "bluetooth", Body: "HomeWhiz uygulaması ile program takibi ve uzaktan kontrol."},
+			},
+			SpecGroups: []ProductSpecGroup{
+				{Title: "Genel Özellikler", Rows: []ProductSpecRow{
+					{Label: "Kapasite", Value: "9 kg"},
+					{Label: "Kurutma", Value: "Var"},
+					{Label: "Motor", Value: "ProSmart™ Inverter"},
+					{Label: "Enerji Sınıfı", Value: "A"},
+				}},
+			},
+			Documents: []ProductDocument{
+				{Title: "Kullanma Kılavuzu", Lang: "Türkçe", Kind: "manual", URL: "https://www.beko.com.tr/"},
+				{Title: "Enerji Etiketi", Lang: "Türkçe", Kind: "energy", URL: "https://www.beko.com.tr/"},
+			},
+		}, true
+	case "BM3340I":
+		return ProductDetail{
+			EnergyClass: "C",
+			Features: []ProductFeature{
+				{Title: "CornerIntense™", Icon: "cyclone", Body: "Köşe jetleri ile daha etkili yıkama."},
+				{Title: "HygieneShield", Icon: "sanitizer", Body: "Yüksek sıcaklıkta hijyen programı."},
+			},
+			SpecGroups: []ProductSpecGroup{
+				{Title: "Genel Özellikler", Rows: []ProductSpecRow{
+					{Label: "Kapasite", Value: "14 kişilik"},
+					{Label: "Yerleşim", Value: "Ankastre"},
+					{Label: "Enerji Sınıfı", Value: "C"},
+				}},
+			},
+			Documents: []ProductDocument{
+				{Title: "Kullanma Kılavuzu", Lang: "Türkçe", Kind: "manual", URL: "https://www.beko.com.tr/"},
+			},
+		}, true
+	case "AFK-31260":
+		return ProductDetail{
+			EnergyClass: "A+++",
+			Features: []ProductFeature{
+				{Title: "Ekostar Inverter", Icon: "mode_fan", Body: "Hızlı soğutma, düşük tüketim."},
+				{Title: "Ücretsiz Montaj", Icon: "handyman", Body: "Standart montaj ve bakır boru paketi dahil."},
+			},
+			SpecGroups: []ProductSpecGroup{
+				{Title: "Genel Özellikler", Rows: []ProductSpecRow{
+					{Label: "Enerji Sınıfı", Value: "A+++"},
+					{Label: "Tip", Value: "Inverter Split Klima"},
+				}},
+			},
+			Documents: []ProductDocument{
+				{Title: "Kullanma Kılavuzu", Lang: "Türkçe", Kind: "manual", URL: "https://www.beko.com.tr/"},
+				{Title: "Enerji Etiketi", Lang: "Türkçe", Kind: "energy", URL: "https://www.beko.com.tr/"},
+			},
+		}, true
+	default:
+		return ProductDetail{
+			EnergyClass: "B",
+			Features: []ProductFeature{
+				{Title: "ProSmart™ Inverter", Icon: "settings_motion_mode", Body: "Düşük enerji, sessiz çalışma."},
+				{Title: "Beko teknolojisi", Icon: "verified", Body: "Resmi bayi ürünü, orijinal paket."},
+				{Title: "Yetkili Montaj", Icon: "handyman", Body: "Beko servisi ile ücretsiz kurulum."},
+			},
+			SpecGroups: []ProductSpecGroup{
+				{Title: "Genel Özellikler", Rows: []ProductSpecRow{
+					{Label: "Marka", Value: "Beko"},
+					{Label: "Model / SKU", Value: sku},
+					{Label: "Garanti", Value: "3 yıl resmi + 4 yıl opsiyonel"},
+					{Label: "Montaj", Value: "Yetkili servis · Ücretsiz"},
+				}},
+			},
+			Documents: []ProductDocument{
+				{Title: "Kullanma Kılavuzu", Lang: "Türkçe", Kind: "manual", URL: "https://www.beko.com.tr/"},
+			},
+		}, true
+	}
 }
 
 func (s *Store) DeleteCategory(ctx context.Context, id string) error {
@@ -561,6 +767,7 @@ FROM products WHERE slug=$1
 	}
 	s.attachImages(ctx, &p)
 	s.attachVariants(ctx, &p)
+	s.attachDetail(ctx, &p)
 	return &p, nil
 }
 
@@ -578,7 +785,33 @@ FROM products WHERE id=$1
 	}
 	s.attachImages(ctx, &p)
 	s.attachVariants(ctx, &p)
+	s.attachDetail(ctx, &p)
 	return &p, nil
+}
+
+func (s *Store) attachDetail(ctx context.Context, p *Product) {
+	var raw []byte
+	err := s.db.QueryRow(ctx, `SELECT payload FROM product_details WHERE product_id=$1`, p.ID).Scan(&raw)
+	if err != nil || len(raw) == 0 {
+		return
+	}
+	var d ProductDetail
+	if json.Unmarshal(raw, &d) == nil {
+		p.Detail = &d
+	}
+}
+
+func (s *Store) UpsertProductDetail(ctx context.Context, productID string, detail ProductDetail) error {
+	raw, err := json.Marshal(detail)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(ctx, `
+INSERT INTO product_details (product_id, payload, updated_at)
+VALUES ($1, $2::jsonb, NOW())
+ON CONFLICT (product_id) DO UPDATE SET payload=EXCLUDED.payload, updated_at=NOW()
+`, productID, string(raw))
+	return err
 }
 
 func (s *Store) UpdateProduct(ctx context.Context, id string, p Product) (*Product, error) {

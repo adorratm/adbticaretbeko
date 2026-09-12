@@ -22,6 +22,7 @@ const nav = [
   { href: "/urunler", label: "Ürün Yönetimi", icon: "inventory_2" },
   { href: "/kategoriler", label: "Kategoriler", icon: "category" },
   { href: "/siparisler", label: "Siparişler & Sevkiyat", icon: "local_shipping" },
+  { href: "/is-takibi", label: "İş Takibi", icon: "map" },
   { href: "/servis-ekipleri", label: "Servis Ekipleri", icon: "groups" },
   { href: "/servis-rotalari", label: "Servis Rotaları", icon: "alt_route" },
   { href: "/takas", label: "Takas", icon: "published_with_changes" },
@@ -33,7 +34,7 @@ const nav = [
   { href: "/bildirimler", label: "Bildirimler", icon: "notifications" },
   { href: "/yorumlar", label: "Yorumlar", icon: "rate_review" },
   { href: "/terk-sepet", label: "Terk Sepet", icon: "shopping_cart_off" },
-  { href: "/muhasebe", label: "Muhasebe", icon: "receipt_long" },
+  { href: "/muhasebe", label: "Ön Muhasebe", icon: "receipt_long" },
   { href: "/vitrin", label: "Mağaza / Vitrin", icon: "settings" },
   { href: "/raporlar", label: "Raporlar & Gelir", icon: "monitoring" },
 ];

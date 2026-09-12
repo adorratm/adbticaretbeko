@@ -1,0 +1,551 @@
+@import "tailwindcss";
+@import "@adb/ui/tokens.css";
+
+:root {
+  --tech-ink: #0b2a3d;
+  --tech-ink-soft: #3d5566;
+  --tech-line: rgba(11, 42, 61, 0.1);
+  --tech-glow: rgba(0, 131, 190, 0.22);
+  --tech-ok: #0d9f6e;
+  --tech-warn: #e85d04;
+  --tech-rail: #d5e4ee;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--tech-ink);
+  font-family: var(--adb-font);
+  overflow-x: clip;
+  max-width: 100%;
+  background:
+    radial-gradient(120% 80% at 100% -10%, rgba(0, 152, 219, 0.18), transparent 55%),
+    radial-gradient(90% 60% at -20% 110%, rgba(0, 95, 138, 0.12), transparent 50%),
+    linear-gradient(180deg, #eef6fb 0%, #f5f8fa 42%, #eef2f5 100%);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  line-height: 1;
+  user-select: none;
+}
+
+@keyframes tech-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tech-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(13, 159, 110, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(13, 159, 110, 0);
+  }
+}
+
+@keyframes tech-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.tech-shell {
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.tech-rise {
+  animation: tech-rise 0.45s ease both;
+}
+
+.tech-rise-delay {
+  animation: tech-rise 0.55s ease 0.08s both;
+}
+
+/* ——— Login ——— */
+.tech-login {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 22px 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.tech-login::before {
+  content: "";
+  position: absolute;
+  inset: -20% -30% auto;
+  height: 52%;
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(0, 131, 190, 0.35), transparent 55%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 95, 138, 0.28), transparent 50%);
+  pointer-events: none;
+}
+
+.tech-brand-mark {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 28px;
+  margin-bottom: 36px;
+}
+
+.tech-brand-word {
+  font-family: var(--adb-font-display);
+  font-size: clamp(2.6rem, 12vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  color: var(--tech-ink);
+  margin: 0;
+}
+
+.tech-brand-word em {
+  font-style: normal;
+  color: var(--adb-primary);
+}
+
+.tech-brand-sub {
+  margin: 0;
+  max-width: 18rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--tech-ink-soft);
+}
+
+.tech-login-form {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.tech-login-form .adb-field label,
+.tech-login-form label {
+  color: var(--tech-ink) !important;
+}
+
+.tech-pin-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--adb-muted);
+}
+
+.tech-login-cta {
+  margin-top: 4px;
+  height: 52px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+}
+
+/* ——— App chrome ——— */
+.tech-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 12px;
+  background: rgba(245, 248, 250, 0.86);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--tech-line);
+}
+
+.tech-topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tech-logo-chip {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, var(--adb-primary-container), var(--adb-primary-deep));
+  box-shadow: 0 8px 20px -8px var(--tech-glow);
+}
+
+.tech-topbar h1 {
+  margin: 0;
+  font-family: var(--adb-font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tech-topbar p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--adb-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tech-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--adb-outline);
+}
+
+.tech-live-dot.on {
+  background: var(--tech-ok);
+  animation: tech-pulse 1.8s ease infinite;
+}
+
+.tech-ghost-btn {
+  border: 1px solid var(--tech-line);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--tech-ink-soft);
+  border-radius: 999px;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tech-ghost-btn:active {
+  transform: scale(0.97);
+}
+
+.tech-body {
+  flex: 1;
+  padding: 16px 16px 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tech-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tech-section-head h2 {
+  margin: 0;
+  font-family: var(--adb-font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.tech-section-head span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--adb-primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tech-empty {
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--adb-muted);
+  border-top: 1px dashed var(--adb-outline-variant);
+  border-bottom: 1px dashed var(--adb-outline-variant);
+}
+
+.tech-empty .material-symbols-outlined {
+  font-size: 40px;
+  color: var(--adb-primary);
+  opacity: 0.75;
+  margin-bottom: 8px;
+}
+
+.tech-empty h3 {
+  margin: 0 0 6px;
+  font-family: var(--adb-font-display);
+  font-size: 1.1rem;
+  color: var(--tech-ink);
+}
+
+.tech-empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* Job rows — interactive list, not card grid */
+.tech-job-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.tech-job {
+  display: grid;
+  grid-template-columns: 4px 1fr auto;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--tech-line);
+  background: transparent;
+  padding: 14px 4px 14px 0;
+  cursor: pointer;
+  color: inherit;
+  transition: background 0.2s ease;
+}
+
+.tech-job:first-child {
+  border-top: 1px solid var(--tech-line);
+}
+
+.tech-job:active {
+  background: rgba(0, 131, 190, 0.06);
+}
+
+.tech-job.is-active {
+  background: linear-gradient(90deg, rgba(0, 131, 190, 0.08), transparent 70%);
+}
+
+.tech-job-rail {
+  border-radius: 4px;
+  background: var(--tech-rail);
+  align-self: stretch;
+  min-height: 100%;
+}
+
+.tech-job.is-active .tech-job-rail,
+.tech-job[data-status="EN_ROUTE"] .tech-job-rail,
+.tech-job[data-status="ON_SITE"] .tech-job-rail {
+  background: linear-gradient(180deg, var(--adb-primary-container), var(--adb-primary-deep));
+}
+
+.tech-job[data-status="DONE"] .tech-job-rail {
+  background: var(--tech-ok);
+}
+
+.tech-job[data-status="ASSIGNED"] .tech-job-rail {
+  background: var(--tech-warn);
+}
+
+.tech-job-main strong {
+  display: block;
+  font-family: var(--adb-font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.tech-job-main .addr {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--tech-ink-soft);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tech-job-main .meta {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--adb-muted);
+  letter-spacing: 0.02em;
+}
+
+.tech-status-pill {
+  align-self: start;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--adb-primary-deep);
+  padding-top: 2px;
+  white-space: nowrap;
+}
+
+/* ——— Active dock ——— */
+.tech-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(440px, 100%);
+  z-index: 30;
+  padding: 0 12px calc(12px + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.tech-dock-inner {
+  pointer-events: auto;
+  border-radius: 20px 20px 16px 16px;
+  overflow: hidden;
+  background: linear-gradient(165deg, #0b2a3d 0%, #0a3d57 48%, #086089 100%);
+  color: #e8f6fc;
+  box-shadow:
+    0 -12px 40px -12px rgba(11, 42, 61, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  animation: tech-rise 0.4s ease both;
+}
+
+.tech-dock-head {
+  padding: 16px 16px 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.tech-dock-head .eyebrow {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(232, 246, 252, 0.55);
+}
+
+.tech-dock-head h3 {
+  margin: 0;
+  font-family: var(--adb-font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.tech-dock-head .phone {
+  font-size: 13px;
+  color: rgba(232, 246, 252, 0.7);
+}
+
+.tech-dock-head .addr {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(232, 246, 252, 0.88);
+}
+
+.tech-dock-head .notes {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #ffe8d6;
+  opacity: 0.95;
+}
+
+.tech-steps {
+  display: flex;
+  gap: 4px;
+  padding: 0 16px 12px;
+}
+
+.tech-step {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+.tech-step.done {
+  background: linear-gradient(90deg, #34d399, #0d9f6e);
+}
+
+.tech-step.current {
+  background: linear-gradient(90deg, #60c8f0, #0083be);
+  background-size: 200% 100%;
+  animation: tech-shimmer 1.6s linear infinite;
+}
+
+.tech-dock-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.tech-dock-actions .primary {
+  grid-column: 1 / -1;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--adb-primary-deep);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tech-dock-actions .primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tech-dock-actions .secondary {
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e8f6fc;
+  font-weight: 650;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.tech-dock-actions .secondary:active,
+.tech-dock-actions .primary:active {
+  transform: scale(0.98);
+}
+
+.tech-alert {
+  margin: 12px 16px 0;
+}

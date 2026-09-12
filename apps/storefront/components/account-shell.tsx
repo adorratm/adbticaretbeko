@@ -11,6 +11,7 @@ const tabs = [
   { href: "/hesabim/adresler", label: "Adreslerim", icon: "home_pin" },
   { href: "/hesabim/siparisler", label: "Siparişlerim", icon: "package_2" },
   { href: "/hesabim/favoriler", label: "Favoriler", icon: "favorite" },
+  { href: "/hesabim/bildirimler", label: "Bildirimler", icon: "notifications" },
 ];
 
 export function AccountShell({
@@ -49,7 +50,8 @@ export function AccountShell({
         >
           <nav className="adb-card" style={{ padding: 10, display: "grid", gap: 4 }}>
             {tabs.map((t) => {
-              const active = pathname === t.href;
+              const active =
+                pathname === t.href || (t.href !== "/hesabim" && pathname.startsWith(t.href));
               return (
                 <Link
                   key={t.href}

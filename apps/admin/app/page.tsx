@@ -111,7 +111,7 @@ export default function AdminDashboard() {
         </Alert>
       ) : null}
 
-      <div className="adb-stagger" style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", marginBottom: 20 }}>
+      <div className="adb-stagger" style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", marginBottom: 20 }}>
         {kpis.map((k) => (
           <div key={k.label} className="adb-card" style={{ padding: 16, position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: k.accent }} />
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "minmax(0, 1.35fr) minmax(260px, 0.75fr)", marginBottom: 16 }}>
+      <div className="admin-split-wide" style={{ display: "grid", gap: 16, gridTemplateColumns: "minmax(0, 1.35fr) minmax(0, 0.75fr)", marginBottom: 16 }}>
         <div className="adb-card" style={{ padding: 16 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
             <h2 style={{ margin: 0, fontSize: 16 }}>Sipariş & montaj pipeline</h2>

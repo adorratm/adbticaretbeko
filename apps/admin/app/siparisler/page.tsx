@@ -81,6 +81,7 @@ export default function SiparislerPage() {
   const [district, setDistrict] = useState("ALL");
   const [montageType, setMontageType] = useState("ALL");
   const [smsOrderId, setSmsOrderId] = useState("");
+  const [smsOrderLabel, setSmsOrderLabel] = useState("");
   const [smsTemplate, setSmsTemplate] = useState("order.montage_scheduled");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
@@ -288,6 +289,9 @@ export default function SiparislerPage() {
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link href="/is-takibi" className="adb-btn adb-btn-tertiary" style={{ height: 40 }}>
+            İş Takibi
+          </Link>
           <Link href="/servis-ekipleri" className="adb-btn adb-btn-tertiary" style={{ height: 40 }}>
             Servis Ekipleri
           </Link>
@@ -641,36 +645,64 @@ th{background:#f3f3f3;text-align:left}
             </div>
           </div>
 
-          <div className="adb-card" style={{ padding: 14 }}>
+          <div className="adb-card" style={{ padding: 14, minWidth: 0, maxWidth: "100%", overflow: "hidden" }}>
             <SectionHeader icon="sms" title="Bildirim gönder" />
-            <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ display: "grid", gap: 10, minWidth: 0, maxWidth: "100%" }}>
               <Field label="Sipariş seç">
                 <SearchableSelect
                   options={[
                     { value: "", label: "Listeden seçin…" },
-                    ...filtered.map((o) => ({
-                      value: o.id,
-                      label: `${o.id.slice(0, 8)} · ${o.customerName || "Müşteri"} · ${o.productName || "Ürün"}`,
-                      searchText: `${o.id} ${o.customerName} ${o.productName} ${o.customerPhone}`,
-                    })),
+                    ...filtered.map((o) => {
+                      const cust = (o.customerName || "Müşteri").slice(0, 22);
+                      const prod = (o.productName || "").slice(0, 18);
+                      return {
+                        value: o.id,
+                        label: `#${o.id.slice(0, 8)} · ${cust}${prod ? ` · ${prod}` : ""}`,
+                        searchText: `${o.id} ${o.customerName} ${o.productName} ${o.customerPhone}`,
+                      };
+                    }),
                   ]}
                   value={smsOrderId}
-                  onChange={setSmsOrderId}
+                  onChange={(id) => {
+                    setSmsOrderId(id);
+                    const o = filtered.find((x) => x.id === id);
+                    setSmsOrderLabel(
+                      o ? `#${o.id.slice(0, 8)} · ${(o.customerName || "").slice(0, 22)}` : "",
+                    );
+                  }}
                   searchPlaceholder="Sipariş ara…"
                   clearable
                 />
               </Field>
               <Field label="veya ara / yapıştır">
                 <Input
-                  value={smsOrderId}
-                  onChange={(e) => setSmsOrderId(e.target.value)}
-                  placeholder="Sipariş, müşteri, ürün…"
+                  value={smsOrderLabel}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setSmsOrderLabel(v);
+                    const term = v.trim().toLowerCase();
+                    if (!term) {
+                      setSmsOrderId("");
+                      return;
+                    }
+                    const hit =
+                      filtered.find((o) => o.id === v.trim()) ||
+                      filtered.find(
+                        (o) =>
+                          o.id.toLowerCase().startsWith(term) ||
+                          o.id.slice(0, 8).toLowerCase() === term.replace(/^#/, "") ||
+                          `${o.customerName} ${o.productName}`.toLowerCase().includes(term),
+                      );
+                    setSmsOrderId(hit?.id || (term.length >= 8 ? v.trim() : ""));
+                  }}
+                  placeholder="Sipariş no veya müşteri…"
                   list="admin-order-suggestions"
+                  style={{ minWidth: 0, maxWidth: "100%" }}
                 />
                 <datalist id="admin-order-suggestions">
                   {filtered.map((o) => (
-                    <option key={`dl-${o.id}`} value={o.id}>
-                      {o.customerName} {o.productName}
+                    <option key={`dl-${o.id}`} value={`#${o.id.slice(0, 8)} · ${o.customerName || ""}`}>
+                      {o.productName}
                     </option>
                   ))}
                 </datalist>
@@ -775,6 +807,15 @@ th{background:#f3f3f3;text-align:left}
                             </div>
                             {detail.serviceRef ? <p style={{ margin: "8px 0 0", fontSize: 13 }}>Servis ref: {String(detail.serviceRef)}</p> : null}
                             {detail.montageNote ? <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--adb-muted)" }}>Not: {String(detail.montageNote)}</p> : null}
+                            <div style={{ marginTop: 12 }}>
+                              <Link
+                                href={`/is-takibi?orderId=${encodeURIComponent(String(detail.id || selectedId))}`}
+                                className="adb-btn adb-btn-primary"
+                                style={{ height: 36, display: "inline-flex", alignItems: "center" }}
+                              >
+                                İş emri oluştur
+                              </Link>
+                            </div>
                           </section>
 
                           <section className="admin-order-section">

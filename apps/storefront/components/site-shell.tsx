@@ -54,6 +54,7 @@ export function StorefrontHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const [category, setCategory] = useState("");
   const [query, setQuery] = useState("");
+  const [liveCartCount, setLiveCartCount] = useState(cartCount);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -61,6 +62,35 @@ export function StorefrontHeader({
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { fetchCartItemCount } = await import("../lib/cart-events");
+      const n = await fetchCartItemCount();
+      if (!cancelled) setLiveCartCount(n);
+    })();
+    const onCart = (e: Event) => {
+      const detail = (e as CustomEvent<{ count?: number }>).detail;
+      if (typeof detail?.count === "number") setLiveCartCount(detail.count);
+      else {
+        import("../lib/cart-events").then(({ fetchCartItemCount }) =>
+          fetchCartItemCount().then((n) => setLiveCartCount(n)),
+        );
+      }
+    };
+    window.addEventListener("adb:cart-changed", onCart);
+    window.addEventListener("storage", onCart);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("adb:cart-changed", onCart);
+      window.removeEventListener("storage", onCart);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof cartCount === "number" && cartCount > 0) setLiveCartCount(cartCount);
+  }, [cartCount]);
 
   async function logout() {
     try {
@@ -211,9 +241,25 @@ export function StorefrontHeader({
         </button>
 
         <Link href="/" className="adb-header-brand" style={{ textDecoration: "none", flexShrink: 0, minWidth: 0 }}>
-          <div style={{ fontWeight: 800, fontSize: 18, color: "var(--adb-primary)", letterSpacing: "-0.02em" }}>ADB TİCARET</div>
-          <div className="adb-label-sm adb-hide-mobile" style={{ color: "var(--adb-secondary)", marginTop: 2 }}>
-            Beko Yetkili Satıcısı
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span
+              style={{
+                fontFamily: "var(--adb-font-display)",
+                fontWeight: 800,
+                fontSize: 26,
+                color: "var(--adb-primary)",
+                letterSpacing: "-0.04em",
+                lineHeight: 1,
+              }}
+            >
+              beko
+            </span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: "var(--adb-secondary-navy)", letterSpacing: "0.02em" }}>
+              ADB TİCARET
+            </span>
+          </div>
+          <div className="adb-label-sm adb-hide-mobile" style={{ color: "var(--adb-muted)", marginTop: 4, fontWeight: 600 }}>
+            Yetkili Satıcı
           </div>
         </Link>
 
@@ -294,7 +340,7 @@ export function StorefrontHeader({
                 fontWeight: 700,
               }}
             >
-              {cartCount}
+              {liveCartCount}
             </span>
           </Link>
         </nav>

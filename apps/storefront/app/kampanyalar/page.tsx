@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { ProductCard } from "@adb/ui";
 import { createApiClient } from "@adb/api-client";
 import { StorefrontShell } from "../../components/site-shell";
+import { DealCountdown } from "../../components/deal-countdown";
 
 const HERO =
   "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1400&q=80";
@@ -25,6 +27,10 @@ const FALLBACK = [
     imageUrl: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=80",
   },
 ];
+
+function formatTRY(kurus: number) {
+  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(kurus / 100);
+}
 
 export default async function KampanyalarPage() {
   const api = createApiClient({
@@ -56,6 +62,38 @@ export default async function KampanyalarPage() {
     /* fallback */
   }
 
+  let products: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    sku: string;
+    images?: Array<{ url: string }>;
+    priceLabel?: string;
+  }> = [];
+  try {
+    const list = await api.products.list();
+    products = await Promise.all(
+      list.items.slice(0, 4).map(async (p) => {
+        let priceLabel: string | undefined;
+        try {
+          priceLabel = formatTRY((await api.pricing.get(p.id)).amount);
+        } catch {
+          priceLabel = undefined;
+        }
+        return {
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          sku: p.sku,
+          images: p.images,
+          priceLabel,
+        };
+      }),
+    );
+  } catch {
+    products = [];
+  }
+
   return (
     <StorefrontShell>
       <main>
@@ -75,6 +113,29 @@ export default async function KampanyalarPage() {
         </section>
 
         <section className="adb-section">
+          <div className="adb-container" style={{ marginBottom: 20 }}>
+            <div
+              className="adb-card"
+              style={{
+                padding: 16,
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 16,
+                flexWrap: "wrap",
+                alignItems: "center",
+                background: "linear-gradient(135deg, rgba(0,86,179,0.08), transparent)",
+              }}
+            >
+              <div>
+                <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
+                  Bu haftanın fırsatı bitiyor
+                </div>
+                <strong style={{ fontSize: 16 }}>Takas + peşin fiyatına 9 taksit</strong>
+              </div>
+              <DealCountdown />
+            </div>
+          </div>
+
           <div className="adb-container adb-stagger" style={{ display: "grid", gap: 20 }}>
             {campaigns.map((c, i) => (
               <article
@@ -115,6 +176,50 @@ export default async function KampanyalarPage() {
                 />
               </article>
             ))}
+          </div>
+
+          {products.length > 0 ? (
+            <div className="adb-container" style={{ marginTop: 36 }}>
+              <h2 className="adb-headline-md" style={{ marginBottom: 14 }}>
+                Kampanyalı ürünleri gör
+              </h2>
+              <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
+                {products.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    href={`/urun/${p.slug}`}
+                    sku={p.sku}
+                    title={p.name}
+                    imageUrl={p.images?.[0]?.url}
+                    priceLabel={p.priceLabel}
+                    promoLabel="Kampanya"
+                    features={["Ücretsiz montaj", "Yetkili satıcı"]}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="adb-container" style={{ marginTop: 48 }}>
+            <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
+              Kampanya rehberi
+            </div>
+            <h2 className="adb-headline-md" style={{ margin: "6px 0 16px", fontFamily: "var(--adb-font-display)" }}>
+              Nasıl faydalanırım?
+            </h2>
+            <div className="adb-stagger" style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+              {[
+                ["1 · Seçin", "Takas, çeyiz veya sezon ürününü belirleyin."],
+                ["2 · Teklif / sepet", "Online ön teklif alın veya ürünü sepete ekleyin."],
+                ["3 · Onay", "Ödeme sonrası stok rezervasyonu ve montaj planı SMS ile gelir."],
+                ["4 · Kurulum", "Yetkili servis ücretsiz montajı tamamlar."],
+              ].map(([t, b]) => (
+                <div key={t} style={{ padding: 18, background: "#fff", borderLeft: "3px solid var(--adb-primary)" }}>
+                  <strong style={{ fontFamily: "var(--adb-font-display)" }}>{t}</strong>
+                  <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--adb-muted)", lineHeight: 1.5 }}>{b}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </main>

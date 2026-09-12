@@ -3,11 +3,9 @@ import Link from "next/link";
 import { createApiClient } from "@adb/api-client";
 import { ProductCard } from "@adb/ui";
 import { StorefrontShell } from "../../../components/site-shell";
+import { categoryImage } from "../../../lib/category-media";
 
-const categoryMeta: Record<
-  string,
-  { title: string; blurb: string; accent: string }
-> = {
+const categoryMeta: Record<string, { title: string; blurb: string; accent: string }> = {
   buzdolaplari: {
     title: "Buzdolapları",
     blurb: "HarvestFresh™ teknolojili No Frost buzdolapları — orijinal Beko seçkisi.",
@@ -38,7 +36,6 @@ const categoryMeta: Record<
     blurb: "Robot süpürge ve günlük yaşamı kolaylaştıran Beko ürünleri.",
     accent: "Robot · Lazer haritalama",
   },
-  // Eski slug yönlendirmeleri için meta (redirect next.config'te)
   "beyaz-esya": {
     title: "Beyaz Eşya",
     blurb: "Buzdolabı, çamaşır ve bulaşık makineleri.",
@@ -47,6 +44,10 @@ const categoryMeta: Record<
 };
 
 type PageProps = { params: Promise<{ slug: string }> };
+
+function formatTRY(kurus: number) {
+  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(kurus / 100);
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -83,12 +84,13 @@ export default async function CategoryPage({ params }: PageProps) {
     name: string;
     slug: string;
     shortDescription?: string;
+    images?: Array<{ url: string }>;
   }> = [];
   let loadError = false;
 
   try {
     const res = await api.search.query({ category: slug });
-    items = res.items;
+    items = res.items as typeof items;
   } catch {
     try {
       const res = await api.products.list({ category: slug });
@@ -98,36 +100,83 @@ export default async function CategoryPage({ params }: PageProps) {
     }
   }
 
+  // Enrich missing images from product detail list when search returns thin payloads
+  if (items.length > 0 && items.some((p) => !p.images?.[0]?.url)) {
+    try {
+      const all = await api.products.list({ category: slug });
+      const byId = Object.fromEntries(all.items.map((p) => [p.id, p]));
+      items = items.map((p) => ({
+        ...p,
+        images: p.images?.length ? p.images : byId[p.id]?.images,
+        shortDescription: p.shortDescription || byId[p.id]?.shortDescription,
+      }));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const prices = await Promise.all(
+    items.slice(0, 24).map(async (p) => {
+      try {
+        const price = await api.pricing.get(p.id);
+        return { id: p.id, label: formatTRY(price.amount), list: formatTRY(Math.round(price.amount * 1.12)) };
+      } catch {
+        return { id: p.id, label: undefined as string | undefined, list: undefined as string | undefined };
+      }
+    }),
+  );
+  const priceMap = Object.fromEntries(prices.map((p) => [p.id, p]));
+
+  const heroImg = categoryImage(slug);
+
   return (
     <StorefrontShell>
       <main>
-        <section
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(0,63,135,0.12), rgba(0,63,135,0.02) 55%), var(--adb-surface)",
-            borderBottom: "1px solid var(--adb-border-subtle)",
-          }}
-        >
-          <div className="adb-container" style={{ padding: "40px 24px 36px" }}>
-            <p className="adb-label-sm" style={{ color: "var(--adb-primary)", marginBottom: 8 }}>
+        <section className="adb-page-hero" style={{ minHeight: "min(38vh, 340px)" }}>
+          <div className="adb-page-hero-media" style={{ backgroundImage: `url(${heroImg})` }} aria-hidden />
+          <div className="adb-container adb-page-hero-content">
+            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", marginBottom: 10 }}>
+              <Link href="/" style={{ color: "inherit" }}>
+                Ana Sayfa
+              </Link>{" "}
+              /{" "}
+              <Link href="/kategori" style={{ color: "inherit" }}>
+                Ürün Grupları
+              </Link>{" "}
+              / {meta.title}
+            </p>
+            <p className="adb-label-sm" style={{ color: "#7dd3fc", marginBottom: 8 }}>
               {meta.accent}
             </p>
-            <h1 style={{ margin: 0, fontSize: "clamp(1.6rem, 3vw, 2.2rem)" }}>{meta.title}</h1>
-            <p style={{ color: "var(--adb-muted)", maxWidth: 560, marginTop: 10, lineHeight: 1.55 }}>
-              {meta.blurb}
-            </p>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
+            <h1
+              style={{
+                margin: 0,
+                fontFamily: "var(--adb-font-display)",
+                fontSize: "clamp(1.7rem, 3.5vw, 2.6rem)",
+                fontWeight: 700,
+                color: "#fff",
+                letterSpacing: "-0.03em",
+              }}
+            >
+              {meta.title}
+            </h1>
+            <p style={{ color: "rgba(255,255,255,0.88)", maxWidth: 560, marginTop: 12, lineHeight: 1.55 }}>{meta.blurb}</p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 20 }}>
               <Link href={`/arama?category=${encodeURIComponent(slug)}`} className="adb-btn adb-btn-primary" style={{ textDecoration: "none" }}>
                 Bu kategoride ara
               </Link>
-              <Link href="/takas" className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
+              <Link
+                href="/takas"
+                className="adb-btn"
+                style={{ textDecoration: "none", background: "transparent", border: "1px solid rgba(255,255,255,0.45)", color: "#fff" }}
+              >
                 Takas teklifi al
               </Link>
             </div>
           </div>
         </section>
 
-        <div className="adb-container" style={{ padding: "28px 24px 64px" }}>
+        <div className="adb-container" style={{ padding: "32px 24px 72px" }}>
           {loadError ? (
             <EmptyState
               title="Katalog şu an yanıt vermiyor"
@@ -141,22 +190,36 @@ export default async function CategoryPage({ params }: PageProps) {
             />
           ) : (
             <>
-              <p style={{ color: "var(--adb-muted)", marginBottom: 18 }}>{items.length} ürün</p>
-              <div
-                style={{
-                  display: "grid",
-                  gap: 16,
-                  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-                }}
-              >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 20, alignItems: "end" }}>
+                <div>
+                  <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
+                    Vitrin
+                  </div>
+                  <h2 className="adb-headline-md" style={{ margin: "4px 0 0", fontFamily: "var(--adb-font-display)" }}>
+                    {items.length} ürün
+                  </h2>
+                </div>
+                <Link href="/kategori" style={{ color: "var(--adb-primary)", fontWeight: 700, fontSize: 14 }}>
+                  Tüm gruplar →
+                </Link>
+              </div>
+              <div style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
                 {items.map((p) => (
                   <ProductCard
                     key={p.id}
                     href={`/urun/${p.slug}`}
                     sku={p.sku}
                     title={p.name}
-                    features={p.shortDescription ? [p.shortDescription] : undefined}
-                    promoLabel="Bayi stoku"
+                    imageUrl={p.images?.[0]?.url || heroImg}
+                    priceLabel={priceMap[p.id]?.label}
+                    listPriceLabel={priceMap[p.id]?.list}
+                    features={p.shortDescription ? [p.shortDescription, "Ücretsiz montaj"] : ["Ücretsiz montaj", "Orijinal Beko"]}
+                    promoLabel="Stokta"
+                    action={
+                      <Link href={`/urun/${p.slug}`} className="adb-btn adb-btn-primary" style={{ width: "100%", textDecoration: "none" }}>
+                        İncele
+                      </Link>
+                    }
                   />
                 ))}
               </div>
@@ -168,40 +231,20 @@ export default async function CategoryPage({ params }: PageProps) {
   );
 }
 
-function EmptyState({
-  title,
-  body,
-  slug,
-}: {
-  title: string;
-  body: string;
-  slug?: string;
-}) {
+function EmptyState({ title, body, slug }: { title: string; body: string; slug?: string }) {
   return (
-    <div
-      style={{
-        padding: "48px 24px",
-        textAlign: "center",
-        background:
-          "linear-gradient(160deg, rgba(0,63,135,0.06), transparent 60%), var(--adb-surface-low)",
-        borderRadius: 16,
-        border: "1px solid var(--adb-border-subtle)",
-      }}
-    >
+    <div style={{ padding: "56px 24px", textAlign: "center", background: "#fff", borderRadius: 8, border: "1px solid var(--adb-border-subtle)" }}>
       <span className="material-symbols-outlined" style={{ fontSize: 48, color: "var(--adb-primary)", opacity: 0.65 }}>
         inventory_2
       </span>
-      <h2 style={{ marginTop: 12, marginBottom: 8 }}>{title}</h2>
+      <h2 style={{ marginTop: 12, marginBottom: 8, fontFamily: "var(--adb-font-display)" }}>{title}</h2>
       <p style={{ color: "var(--adb-muted)", maxWidth: 480, margin: "0 auto 22px", lineHeight: 1.55 }}>{body}</p>
       <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
         <Link href="/arama" className="adb-btn adb-btn-primary" style={{ textDecoration: "none" }}>
           Ürün ara
         </Link>
-        <Link href="/kampanyalar" className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
-          Kampanyalar
-        </Link>
-        <Link href="/" className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
-          Ana sayfa
+        <Link href="/kategori" className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>
+          Kategoriler
         </Link>
         {slug ? (
           <Link href={`/arama?category=${encodeURIComponent(slug)}`} className="adb-btn adb-btn-tertiary" style={{ textDecoration: "none" }}>

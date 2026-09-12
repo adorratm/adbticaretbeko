@@ -165,13 +165,14 @@ export default function AccountAddressesPage() {
           <Field label="Posta kodu">
             <Input value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} />
           </Field>
-          <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
+          <label className="adb-check">
             <input
               type="checkbox"
               checked={form.isDefault}
               onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}
             />
-            Varsayılan teslimat adresi
+            <span className="adb-check-box" aria-hidden />
+            <span>Varsayılan teslimat adresi</span>
           </label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Button type="submit" disabled={busy}>

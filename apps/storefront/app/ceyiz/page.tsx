@@ -160,6 +160,28 @@ export default function CeyizPage() {
                 {busy ? "Gönderiliyor…" : "Rezervasyon oluştur"}
               </Button>
             </form>
+
+            <div style={{ marginTop: 40 }}>
+              <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
+                Neden çeyiz paketleri?
+              </div>
+              <h2 className="adb-headline-md" style={{ margin: "6px 0 16px", fontFamily: "var(--adb-font-display)" }}>
+                Depolama + montaj + bayi güvencesi
+              </h2>
+              <div className="adb-stagger" style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+                {[
+                  ["Ücretsiz depolama", "Düğün tarihine kadar ürünler ADB deposunda sigortalı saklanır."],
+                  ["Tek seferde kurulum", "Yetkili servis ekibi planlanan günde montajı tamamlar."],
+                  ["Esnek paketler", "Başlangıç ve premium setler; eksik ürünleri sonradan ekleyebilirsiniz."],
+                  ["Peşin fiyatına taksit", "Anlaşmalı kartlarda vade farksız 9 taksit imkanı."],
+                ].map(([t, b]) => (
+                  <div key={t} style={{ padding: 18, background: "#fff", border: "1px solid var(--adb-border-subtle)", borderRadius: 8 }}>
+                    <strong style={{ fontFamily: "var(--adb-font-display)" }}>{t}</strong>
+                    <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--adb-muted)", lineHeight: 1.5 }}>{b}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       </main>

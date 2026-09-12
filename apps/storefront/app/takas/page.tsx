@@ -86,7 +86,7 @@ export default function TakasPage() {
         </section>
 
         <section className="adb-section">
-          <div className="adb-container" style={{ display: "grid", gap: 24, gridTemplateColumns: "minmax(0,1.1fr) minmax(260px,.75fr)", alignItems: "start" }}>
+          <div className="adb-container adb-split-grid" style={{ display: "grid", gap: 24, gridTemplateColumns: "minmax(0,1.1fr) minmax(0,.75fr)", alignItems: "start" }}>
             {result ? (
               <div className="adb-card adb-animate-in" style={{ padding: 28 }}>
                 <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
@@ -150,6 +150,30 @@ export default function TakasPage() {
                 Maks. 15.000 TL değişim desteği
               </div>
             </aside>
+          </div>
+        </section>
+
+        <section className="adb-section" style={{ background: "#fff" }}>
+          <div className="adb-container">
+            <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
+              Sık sorulanlar
+            </div>
+            <h2 className="adb-headline-md" style={{ margin: "6px 0 18px", fontFamily: "var(--adb-font-display)" }}>
+              Takas hakkında bilmeniz gerekenler
+            </h2>
+            <div className="adb-stagger" style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))" }}>
+              {[
+                ["Ön teklif kesin midir?", "Online tutar tahmini niteliğindedir. Kesin tutar mağaza ekspertizi sonrası onaylanır."],
+                ["Cihazımı kim alır?", "Onay sonrası eski cihaz adresinizden veya mağazaya bırakarak alınabilir."],
+                ["Hangi ürünler dahil?", "Buzdolabı, çamaşır, bulaşık, klima ve ankastre setlerde geçerli (kampanya koşullarına göre)."],
+                ["Montaj dahil mi?", "Yeni ürününüzde ücretsiz yetkili servis montajı standarttır."],
+              ].map(([q, a]) => (
+                <div key={q} style={{ padding: 18, borderTop: "3px solid var(--adb-primary)", background: "var(--adb-surface)" }}>
+                  <strong style={{ display: "block", marginBottom: 8, fontFamily: "var(--adb-font-display)" }}>{q}</strong>
+                  <p style={{ margin: 0, fontSize: 14, color: "var(--adb-muted)", lineHeight: 1.55 }}>{a}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       </main>

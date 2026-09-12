@@ -8,12 +8,14 @@ type Variant = { id: string; sku: string; name: string };
 
 export function PdpBuyBox({
   productId,
+  productSlug,
   sku,
   name,
   unitPrice,
   variants,
 }: {
   productId: string;
+  productSlug: string;
   sku: string;
   name: string;
   unitPrice: number;
@@ -42,6 +44,7 @@ export function PdpBuyBox({
       ) : null}
       <AddToCartButton
         productId={productId}
+        productSlug={productSlug}
         variantId={selected}
         sku={current?.sku || sku}
         name={current?.name || name}

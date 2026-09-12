@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge } from "@adb/ui";
+import { ProductCard } from "@adb/ui";
 import { createApiClient } from "@adb/api-client";
 import { StorefrontShell } from "../../../components/site-shell";
 import { PdpBuyBox } from "../../../components/pdp-buy-box";
 import { PdpGallery } from "../../../components/pdp-gallery";
 import { WishlistButton } from "../../../components/wishlist-button";
-import { PdpReviews } from "../../../components/pdp-reviews";
+import { PdpDetailSections } from "../../../components/pdp-detail-sections";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -19,6 +19,29 @@ function api() {
 
 function formatTRY(kurus: number) {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(kurus / 100);
+}
+
+function parseBranches(raw?: string) {
+  if (!raw?.trim()) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.map((b) => ({
+        name: String(b.name || b.title || "Mağaza"),
+        city: String(b.city || ""),
+        district: String(b.district || ""),
+        address: String(b.address || ""),
+        phone: String(b.phone || ""),
+      }));
+    }
+  } catch {
+    /* plain text */
+  }
+  return raw
+    .split(/\n|;/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => ({ name: line, city: "", district: "", address: line, phone: "" }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -81,22 +104,50 @@ export default async function ProductPage({ params }: PageProps) {
   const installment = amount > 0 ? Math.round(amount / 9) : 0;
   const phone = cms?.store.phone || "0850 300 23 56";
   const dealerCode = cms?.store.dealerCode || "340982";
+  const detail = product.detail;
+  const energy = detail?.energyClass || "B";
 
-  const specs = [
-    ["Model / SKU", product.sku],
-    ["Durum", product.status],
-    ["Enerji Sınıfı", "B"],
-    ["Montaj", "Yetkili servis · Ücretsiz"],
-    ["Garanti", "3 yıl resmi + 4 yıl opsiyonel"],
-    ["Teslimat", "14:00’e kadar siparişlerde aynı gün sevk"],
-    ["Açıklama", product.shortDescription || product.description || "Beko resmi bayi ürünü"],
-  ];
+  let related: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    sku: string;
+    shortDescription?: string;
+    images?: Array<{ url: string }>;
+  }> = [];
+  try {
+    related = (await client.products.list()).items.filter((p) => p.id !== product.id).slice(0, 4);
+  } catch {
+    related = [];
+  }
 
-  const techs = [
-    { title: "ProSmart™ Inverter", body: "Düşük enerji, sessiz çalışma" },
-    { title: "HarvestFresh™", body: "Sebze-meyve tazeliğini koruyan ışık teknolojisi" },
-    { title: "Yetkili Montaj", body: "Beko servisi ile ücretsiz kurulum" },
-  ];
+  const relatedPrices = await Promise.all(
+    related.map(async (p) => {
+      try {
+        const price = await client.pricing.get(p.id);
+        return { id: p.id, label: formatTRY(price.amount), list: formatTRY(Math.round(price.amount * 1.12)) };
+      } catch {
+        return { id: p.id, label: undefined as string | undefined, list: undefined as string | undefined };
+      }
+    }),
+  );
+  const relatedPriceMap = Object.fromEntries(relatedPrices.map((p) => [p.id, p]));
+
+  const relatedDetails = await Promise.all(
+    related.slice(0, 2).map(async (p) => {
+      try {
+        const full = await client.products.getBySlug(p.slug);
+        const rows = full.detail?.specGroups?.[0]?.rows?.slice(0, 6) || [];
+        return {
+          id: p.id,
+          compare: rows.map((r) => ({ label: r.label, value: r.value })),
+        };
+      } catch {
+        return { id: p.id, compare: [] as Array<{ label: string; value: string }> };
+      }
+    }),
+  );
+  const relatedDetailMap = Object.fromEntries(relatedDetails.map((r) => [r.id, r.compare]));
 
   return (
     <StorefrontShell
@@ -123,173 +174,192 @@ export default async function ProductPage({ params }: PageProps) {
               url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/urun/${product.slug}`,
               priceCurrency: "TRY",
               price: amount > 0 ? (amount / 100).toFixed(2) : undefined,
-              availability:
-                saleable > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              availability: saleable > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
               seller: { "@type": "Organization", name: "ADB Ticaret Beko Yetkili Satıcısı" },
             },
           }),
         }}
       />
-      <main className="adb-container" style={{ paddingTop: 24, paddingBottom: 64 }}>
-        <p style={{ fontSize: 13, color: "var(--adb-muted)", marginBottom: 16 }}>
-          <Link href="/">Ana Sayfa</Link> / <Link href="/kategori">Ürün Grupları</Link> /{" "}
-          <span style={{ color: "var(--adb-on-surface)", fontWeight: 600 }}>{product.name}</span>
-        </p>
-
-        <div style={{ display: "grid", gap: 28, gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
-          <PdpGallery dealerCode={dealerCode} images={product.images} />
-
-          <div className="adb-animate-in">
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-              <Badge tone="dealer">Orijinal Beko</Badge>
-              <Badge tone="service">Ücretsiz Montaj</Badge>
-              <Badge tone="service">Resmi Garanti</Badge>
-            </div>
-            <h1 className="adb-headline-lg" style={{ margin: "0 0 6px" }}>
-              {product.name}
-            </h1>
-            <p style={{ color: "var(--adb-outline)", marginTop: 0, fontFamily: "ui-monospace, monospace", fontSize: 13 }}>
-              Model: {product.sku}
-            </p>
-
-            <div className="adb-card" style={{ padding: 16, marginBottom: 16, background: "var(--adb-surface-low)", border: "none" }}>
-              {list > 0 ? (
-                <div style={{ fontSize: 13, color: "var(--adb-outline)", textDecoration: "line-through" }}>{formatTRY(list)}</div>
-              ) : null}
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-                <div className="adb-price" style={{ fontSize: 32 }}>
-                  {amount > 0 ? formatTRY(amount) : "Fiyat sorunuz"}
-                </div>
-                <span style={{ fontSize: 13, color: "var(--adb-muted)" }}>(KDV Dahil)</span>
-                {amount > 0 ? (
-                  <span
-                    style={{
-                      background: "var(--adb-tertiary-fixed)",
-                      color: "#7d1f00",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: "2px 8px",
-                      borderRadius: 4,
-                    }}
-                  >
-                    %12 Bayi İndirimi
-                  </span>
-                ) : null}
-              </div>
-              {amount > 0 ? (
-                <>
-                  <p style={{ margin: "10px 0 0", fontSize: 13, color: "var(--adb-muted)" }}>
-                    Havale ile %3 ekstra indirim · Peşin fiyatına <strong>9 taksit</strong> ({formatTRY(installment)}/ay)
-                  </p>
-                  <p style={{ margin: "6px 0 0", fontSize: 13 }}>
-                    Montaj dahil: <strong>0 TL</strong> · Ek garanti upsell: <strong>+2.490 TL</strong>
-                  </p>
-                </>
-              ) : null}
-            </div>
-
-            <p style={{ fontSize: 14, color: saleable > 0 ? "var(--adb-success)" : "var(--adb-error)", fontWeight: 600 }}>
-              {saleable > 0 ? `Mağazada ${saleable} adet satılabilir stok` : "Stok bilgisini sorun / tükendi"}
-            </p>
-            <p style={{ fontSize: 13, color: "var(--adb-tertiary)", fontWeight: 700, display: "flex", gap: 6, alignItems: "center" }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                schedule
-              </span>
-              Saat 15:00’e kadar siparişlerde aynı gün sevk
-            </p>
-
-            <div style={{ marginTop: 16, maxWidth: 420, display: "grid", gap: 10 }}>
-              <PdpBuyBox
-                productId={product.id}
-                sku={product.sku}
-                name={product.name}
-                unitPrice={amount}
-                variants={product.variants}
-              />
-              <WishlistButton
-                productId={product.id}
-                productName={product.name}
-                sku={product.sku}
-                productSlug={product.slug}
-              />
-              <a
-                href={`https://wa.me/${(cms?.store.whatsapp || phone).replace(/\D/g, "")}?text=${encodeURIComponent(`Merhaba, ${product.sku} hakkında bilgi almak istiyorum.`)}`}
-                className="adb-btn adb-btn-tertiary"
-              >
-                <span className="material-symbols-outlined" style={{ color: "#059669" }}>
-                  chat
-                </span>
-                WhatsApp ile özel teklif
-              </a>
-            </div>
-
-            <div className="adb-card" style={{ marginTop: 20, padding: 14, display: "flex", gap: 10, alignItems: "center" }}>
-              <span className="material-symbols-outlined" style={{ color: "var(--adb-primary)" }}>
-                verified
-              </span>
-              <div style={{ fontSize: 13 }}>
-                <strong>Bayi Belgesi #{dealerCode}</strong>
-                <div style={{ color: "var(--adb-muted)" }}>Beko Türkiye yetkili satıcı güvencesi</div>
-              </div>
-            </div>
-          </div>
+      <main>
+        <div className="adb-container" style={{ paddingTop: 20, paddingBottom: 20 }}>
+          <p style={{ fontSize: 13, color: "var(--adb-muted)", margin: 0 }}>
+            <Link href="/">Ana Sayfa</Link> / <Link href="/kategori">Ürün Grupları</Link> /{" "}
+            <span style={{ color: "var(--adb-on-surface)", fontWeight: 600 }}>{product.name}</span>
+          </p>
         </div>
 
-        <section style={{ marginTop: 40 }}>
-          <h2 className="adb-headline-md">Patentli teknolojiler</h2>
-          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", marginTop: 12 }}>
-            {techs.map((t) => (
-              <div key={t.title} className="adb-card" style={{ padding: 16 }}>
-                <div style={{ fontWeight: 700 }}>{t.title}</div>
-                <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--adb-muted)" }}>{t.body}</p>
+        <section style={{ background: "#fff", borderTop: "1px solid var(--adb-border-subtle)", borderBottom: "1px solid var(--adb-border-subtle)" }}>
+          <div
+            className="adb-container adb-pdp-grid"
+            style={{
+              display: "grid",
+              gap: 40,
+              gridTemplateColumns: "minmax(0, 1.05fr) minmax(280px, 0.95fr)",
+              padding: "28px 24px 40px",
+              alignItems: "start",
+            }}
+          >
+            <PdpGallery dealerCode={dealerCode} images={product.images} energyClass={energy} />
+
+            <div className="adb-animate-in adb-pdp-buy">
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+                <span className="adb-pdp-chip">beko</span>
+                <span className="adb-pdp-chip adb-pdp-chip-muted">Ücretsiz montaj</span>
+                <span className="adb-pdp-chip adb-pdp-chip-muted">Resmi garanti</span>
               </div>
-            ))}
-          </div>
-        </section>
 
-        <section style={{ marginTop: 32 }}>
-          <h2 className="adb-headline-md">Teknik özellikler</h2>
-          <div className="adb-card" style={{ marginTop: 12, overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-              <tbody>
-                {specs.map(([k, v], i) => (
-                  <tr key={k} style={{ background: i % 2 ? "var(--adb-surface-low)" : "#fff" }}>
-                    <td style={{ padding: "12px 14px", width: "40%", color: "var(--adb-muted)" }}>{k}</td>
-                    <td style={{ padding: "12px 14px", fontWeight: 600, fontFeatureSettings: '"tnum" 1' }}>{v}</td>
-                  </tr>
+              <h1
+                style={{
+                  margin: "0 0 8px",
+                  fontFamily: "var(--adb-font-display)",
+                  fontSize: "clamp(1.45rem, 2.8vw, 2rem)",
+                  fontWeight: 700,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.2,
+                }}
+              >
+                {product.name}
+              </h1>
+              <p style={{ color: "var(--adb-outline)", margin: "0 0 18px", fontSize: 13, letterSpacing: "0.04em", textTransform: "uppercase", fontWeight: 600 }}>
+                Model {product.sku}
+              </p>
+
+              <div style={{ paddingBottom: 18, borderBottom: "1px solid var(--adb-border-subtle)", marginBottom: 18 }}>
+                {list > 0 ? (
+                  <div style={{ fontSize: 13, color: "var(--adb-outline)", textDecoration: "line-through" }}>{formatTRY(list)}</div>
+                ) : null}
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                  <div className="adb-price" style={{ fontSize: 34, color: "var(--adb-primary-deep)", fontFamily: "var(--adb-font-display)" }}>
+                    {amount > 0 ? formatTRY(amount) : "Fiyat sorunuz"}
+                  </div>
+                  <span style={{ fontSize: 13, color: "var(--adb-muted)" }}>KDV dahil</span>
+                  {amount > 0 ? (
+                    <span
+                      style={{
+                        background: "var(--adb-tertiary-fixed)",
+                        color: "#9a3412",
+                        fontSize: 11,
+                        fontWeight: 800,
+                        padding: "3px 8px",
+                        borderRadius: 2,
+                      }}
+                    >
+                      %12 bayi indirimi
+                    </span>
+                  ) : null}
+                </div>
+                {amount > 0 ? (
+                  <p style={{ margin: "12px 0 0", fontSize: 14, color: "var(--adb-muted)", lineHeight: 1.5 }}>
+                    Peşin fiyatına <strong style={{ color: "var(--adb-on-surface)" }}>9 taksit</strong> ({formatTRY(installment)}/ay) · Montaj{" "}
+                    <strong style={{ color: "var(--adb-on-surface)" }}>0 TL</strong>
+                  </p>
+                ) : null}
+              </div>
+
+              <p style={{ fontSize: 14, color: saleable > 0 ? "var(--adb-success)" : "var(--adb-error)", fontWeight: 650, margin: "0 0 8px" }}>
+                {saleable > 0 ? `Stokta · ${saleable} adet satılabilir` : "Stok bilgisini sorun / tükendi"}
+              </p>
+              <p style={{ fontSize: 13, color: "var(--adb-primary-deep)", fontWeight: 700, display: "flex", gap: 6, alignItems: "center", margin: "0 0 18px" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                  local_shipping
+                </span>
+                15:00’e kadar siparişlerde aynı gün sevk
+              </p>
+
+              <div style={{ display: "grid", gap: 10, maxWidth: 440 }}>
+                <PdpBuyBox productId={product.id} productSlug={product.slug} sku={product.sku} name={product.name} unitPrice={amount} variants={product.variants} />
+                <WishlistButton productId={product.id} productName={product.name} sku={product.sku} productSlug={product.slug} />
+                <a
+                  href={`https://wa.me/${(cms?.store.whatsapp || phone).replace(/\D/g, "")}?text=${encodeURIComponent(`Merhaba, ${product.sku} hakkında bilgi almak istiyorum.`)}`}
+                  className="adb-btn adb-btn-tertiary"
+                >
+                  <span className="material-symbols-outlined" style={{ color: "#059669" }}>
+                    chat
+                  </span>
+                  WhatsApp ile özel teklif
+                </a>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 22,
+                  display: "grid",
+                  gap: 0,
+                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                  borderTop: "1px solid var(--adb-border-subtle)",
+                }}
+              >
+                {[
+                  { icon: "handyman", t: "Ücretsiz montaj" },
+                  { icon: "published_with_changes", t: "Takas desteği" },
+                  { icon: "verified_user", t: "3+4 garanti" },
+                ].map((x) => (
+                  <div key={x.t} style={{ padding: "16px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, color: "var(--adb-muted)" }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 22, color: "var(--adb-primary)", display: "block", margin: "0 auto 6px" }}>
+                      {x.icon}
+                    </span>
+                    {x.t}
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section style={{ marginTop: 32 }}>
-          <h2 className="adb-headline-md">Banka taksit örnekleri</h2>
-          <div className="adb-card" style={{ marginTop: 12, overflow: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead style={{ background: "var(--adb-surface-low)", textAlign: "left" }}>
-                <tr>
-                  <th style={{ padding: 12 }}>Banka</th>
-                  <th style={{ padding: 12 }}>3 Taksit</th>
-                  <th style={{ padding: 12 }}>6 Taksit</th>
-                  <th style={{ padding: 12 }}>9 Taksit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {["Garanti BBVA", "İş Bankası", "Yapı Kredi"].map((b) => (
-                  <tr key={b} style={{ borderTop: "1px solid var(--adb-border-subtle)" }}>
-                    <td style={{ padding: 12, fontWeight: 600 }}>{b}</td>
-                    <td style={{ padding: 12 }}>{amount ? formatTRY(Math.round(amount / 3)) : "—"}</td>
-                    <td style={{ padding: 12 }}>{amount ? formatTRY(Math.round(amount / 6)) : "—"}</td>
-                    <td style={{ padding: 12 }}>{amount ? formatTRY(Math.round(amount / 9)) : "—"}</td>
-                  </tr>
+        <div className="adb-container" style={{ padding: "24px 24px 72px" }}>
+          <PdpDetailSections
+            productId={product.id}
+            productName={product.name}
+            sku={product.sku}
+            amount={amount}
+            detail={detail}
+            store={{
+              phone,
+              address: cms?.store.address,
+              dealerCode,
+              branches: parseBranches(cms?.store.branches),
+            }}
+            related={related.slice(0, 2).map((p) => ({
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              sku: p.sku,
+              shortDescription: p.shortDescription,
+              priceLabel: relatedPriceMap[p.id]?.label,
+              compare: relatedDetailMap[p.id] || [],
+            }))}
+          />
+
+          {related.length > 0 ? (
+            <section style={{ marginTop: 48 }}>
+              <div className="adb-label-sm" style={{ color: "var(--adb-primary)" }}>
+                Keşfet
+              </div>
+              <h2 className="adb-headline-md" style={{ margin: "6px 0 18px", fontFamily: "var(--adb-font-display)" }}>
+                Benzer ürünler
+              </h2>
+              <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
+                {related.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    href={`/urun/${p.slug}`}
+                    sku={p.sku}
+                    title={p.name}
+                    imageUrl={p.images?.[0]?.url}
+                    priceLabel={relatedPriceMap[p.id]?.label}
+                    listPriceLabel={relatedPriceMap[p.id]?.list}
+                    features={p.shortDescription ? [p.shortDescription] : ["Orijinal Beko"]}
+                    action={
+                      <Link href={`/urun/${p.slug}`} className="adb-btn adb-btn-primary" style={{ width: "100%", textDecoration: "none" }}>
+                        İncele
+                      </Link>
+                    }
+                  />
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <PdpReviews productId={product.id} />
+              </div>
+            </section>
+          ) : null}
+        </div>
       </main>
     </StorefrontShell>
   );

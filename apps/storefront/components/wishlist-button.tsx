@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@adb/ui";
 import { getStoreAccessToken, getStoreUser, parseApiError } from "@adb/api-client";
 import { createStoreApi } from "../lib/store-api";
+import { useStoreAuth } from "../hooks/use-store-auth";
 
 export function WishlistButton({
   productId,
@@ -17,9 +18,9 @@ export function WishlistButton({
   sku: string;
   productSlug: string;
 }) {
+  const auth = useStoreAuth();
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
-  const loggedIn = typeof window !== "undefined" && !!getStoreAccessToken();
 
   async function add() {
     if (!getStoreAccessToken()) {
@@ -52,13 +53,22 @@ export function WishlistButton({
     }
   }
 
+  // Auth hazır olana kadar sabit etiket — SSR/client mismatch önlenir
+  const label = busy
+    ? "Ekleniyor…"
+    : !auth.ready
+      ? "Favorilere ekle"
+      : auth.loggedIn
+        ? "Favorilere ekle"
+        : "Favori için giriş yap";
+
   return (
     <div style={{ display: "grid", gap: 6 }}>
       <Button type="button" variant="tertiary" disabled={busy} onClick={add}>
         <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
           favorite
         </span>
-        {busy ? "Ekleniyor…" : loggedIn ? "Favorilere ekle" : "Favori için giriş yap"}
+        {label}
       </Button>
       {msg ? (
         <p style={{ margin: 0, fontSize: 12, color: "var(--adb-primary)" }}>

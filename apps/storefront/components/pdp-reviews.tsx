@@ -85,8 +85,8 @@ export function PdpReviews({ productId }: { productId: string }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: 16, gridTemplateColumns: "minmax(0,1fr) minmax(240px,320px)", marginTop: 14 }}>
-        <div style={{ display: "grid", gap: 10 }}>
+      <div className="adb-pdp-reviews-grid" style={{ display: "grid", gap: 16, gridTemplateColumns: "minmax(0,1fr) minmax(0,320px)", marginTop: 14 }}>
+        <div style={{ display: "grid", gap: 10, minWidth: 0 }}>
           {items.length === 0 ? (
             <div className="adb-card" style={{ padding: 20, color: "var(--adb-muted)" }}>
               İlk yorumu siz yazın — montaj ve ürün deneyiminizi paylaşın.

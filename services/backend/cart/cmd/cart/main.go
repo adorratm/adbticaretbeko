@@ -15,12 +15,13 @@ import (
 )
 
 type CartItem struct {
-	VariantID string `json:"variantId"`
-	ProductID string `json:"productId"`
-	Name      string `json:"name"`
-	SKU       string `json:"sku"`
-	Qty       int    `json:"qty"`
-	UnitPrice int64  `json:"unitPrice"`
+	VariantID   string `json:"variantId"`
+	ProductID   string `json:"productId"`
+	ProductSlug string `json:"productSlug,omitempty"`
+	Name        string `json:"name"`
+	SKU         string `json:"sku"`
+	Qty         int    `json:"qty"`
+	UnitPrice   int64  `json:"unitPrice"`
 }
 
 type Cart struct {
@@ -70,6 +71,12 @@ func main() {
 		for i := range c.Items {
 			if c.Items[i].VariantID == item.VariantID {
 				c.Items[i].Qty += item.Qty
+				if item.ProductSlug != "" {
+					c.Items[i].ProductSlug = item.ProductSlug
+				}
+				if item.ProductID != "" {
+					c.Items[i].ProductID = item.ProductID
+				}
 				found = true
 				break
 			}

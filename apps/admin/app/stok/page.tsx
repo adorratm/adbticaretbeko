@@ -122,7 +122,7 @@ export default function StokPage() {
             ))}
           </ul>
         </div>
-        <div className="adb-card" style={{ padding: 16, display: "grid", gap: 8 }}>
+        <div className="adb-card" style={{ padding: 16, display: "grid", gap: 8, overflow: "visible", position: "relative", zIndex: 2 }}>
           <h2 style={{ margin: 0, fontSize: 15 }}>Stok sorgula</h2>
           <Field label="Ürün ara">
             <ProductSearchField

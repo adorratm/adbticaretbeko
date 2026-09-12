@@ -38,6 +38,10 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState("");
   const [taxNo, setTaxNo] = useState("");
   const [billingSame, setBillingSame] = useState(true);
+  const [billingName, setBillingName] = useState("");
+  const [billingLine1, setBillingLine1] = useState("");
+  const [billingDistrict, setBillingDistrict] = useState("");
+  const [billingCity, setBillingCity] = useState("İstanbul");
   const [paymentMethod, setPaymentMethod] = useState("CARD");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState(false);
@@ -127,11 +131,11 @@ export default function CheckoutPage() {
         district,
         addressLine: line1,
         city,
-        billingName: name,
+        billingName: billingSame ? name : billingName || name,
         taxNo: taxNo || undefined,
         billingAddress: billingSame
           ? [line1, `${district} / ${city}`].filter(Boolean).join(", ")
-          : undefined,
+          : [billingLine1, `${billingDistrict} / ${billingCity}`].filter(Boolean).join(", "),
         paymentMethod,
         couponCode: cart?.couponCode,
       });
@@ -206,7 +210,7 @@ export default function CheckoutPage() {
             style={{
               display: "grid",
               gap: 20,
-              gridTemplateColumns: "minmax(0, 1.3fr) minmax(260px, 0.7fr)",
+              gridTemplateColumns: "minmax(0, 1.3fr) minmax(0, 0.7fr)",
               alignItems: "start",
             }}
           >
@@ -256,7 +260,7 @@ export default function CheckoutPage() {
                   <Field label="Adres">
                     <Input value={line1} onChange={(e) => setLine1(e.target.value)} required />
                   </Field>
-                  <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr" }}>
+                  <div className="adb-form-2col" style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
                     <Field label="İlçe">
                       <Input value={district} onChange={(e) => setDistrict(e.target.value)} required />
                     </Field>
@@ -267,15 +271,49 @@ export default function CheckoutPage() {
                   <Field label="VKN / TCKN (fatura, opsiyonel)">
                     <Input value={taxNo} onChange={(e) => setTaxNo(e.target.value)} placeholder="11 veya 10 haneli" />
                   </Field>
-                  <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13 }}>
+                  <label className="adb-check">
                     <input type="checkbox" checked={billingSame} onChange={(e) => setBillingSame(e.target.checked)} />
-                    Fatura adresi teslimat ile aynı
+                    <span className="adb-check-box" aria-hidden />
+                    <span>Fatura adresim teslimat adresimle aynı</span>
                   </label>
+                  {!billingSame ? (
+                    <div
+                      className="adb-animate-in"
+                      style={{
+                        display: "grid",
+                        gap: 12,
+                        padding: 16,
+                        background: "var(--adb-surface)",
+                        border: "1px solid var(--adb-border-subtle)",
+                        borderRadius: 8,
+                      }}
+                    >
+                      <h3 style={{ margin: 0, fontSize: 15, fontFamily: "var(--adb-font-display)" }}>Fatura adresi</h3>
+                      <Field label="Fatura ünvanı / Ad soyad">
+                        <Input value={billingName} onChange={(e) => setBillingName(e.target.value)} required={!billingSame} placeholder="Şirket veya kişi adı" />
+                      </Field>
+                      <Field label="Fatura adresi">
+                        <Input value={billingLine1} onChange={(e) => setBillingLine1(e.target.value)} required={!billingSame} />
+                      </Field>
+                      <div className="adb-form-2col" style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
+                        <Field label="İlçe">
+                          <Input value={billingDistrict} onChange={(e) => setBillingDistrict(e.target.value)} required={!billingSame} />
+                        </Field>
+                        <Field label="İl">
+                          <Input value={billingCity} onChange={(e) => setBillingCity(e.target.value)} required={!billingSame} />
+                        </Field>
+                      </div>
+                    </div>
+                  ) : null}
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                     <Button
                       onClick={() => {
                         if (!name.trim() || !phone.trim() || !line1.trim() || !district.trim()) {
-                          setMsg("Adres alanlarını doldurun");
+                          setMsg("Teslimat adres alanlarını doldurun");
+                          return;
+                        }
+                        if (!billingSame && (!billingName.trim() || !billingLine1.trim() || !billingDistrict.trim())) {
+                          setMsg("Fatura adresi alanlarını doldurun");
                           return;
                         }
                         setMsg("");

@@ -12,6 +12,7 @@ import {
   formatTRY,
   getCartId,
 } from "../../lib/store-api";
+import { emitCartChanged } from "../../lib/cart-events";
 
 export default function CartPage() {
   const router = useRouter();
@@ -42,7 +43,22 @@ export default function CartPage() {
         api.cart.get(id),
         api.checkout.preview(id).catch(() => null),
       ]);
-      setCart(c);
+      const items = await Promise.all(
+        (c.items || []).map(async (it) => {
+          if (it.productSlug) return it;
+          try {
+            const res = await api.products.list({ q: it.sku || it.productId });
+            const match =
+              res.items?.find((p) => p.id === it.productId || p.sku === it.sku) ||
+              res.items?.[0];
+            if (match?.slug) return { ...it, productSlug: match.slug };
+          } catch {
+            /* ignore */
+          }
+          return it;
+        }),
+      );
+      setCart({ ...c, items });
       if (c.couponCode) setCoupon(c.couponCode);
       if (p) {
         setPreview({
@@ -72,7 +88,16 @@ export default function CartPage() {
     try {
       const api = createStoreApi();
       const next = await api.cart.setItemQty(id, variantId, qty);
-      setCart(next);
+      const merged = {
+        ...next,
+        items: next.items.map((it) => {
+          const prev = cart?.items.find((p) => p.variantId === it.variantId);
+          if (it.productSlug || !prev?.productSlug) return it;
+          return { ...it, productSlug: prev.productSlug };
+        }),
+      };
+      setCart(merged);
+      emitCartChanged({ count: merged.items.reduce((a, i) => a + i.qty, 0) });
       const p = await api.checkout.preview(id);
       setPreview({
         subtotal: p.subtotal,
@@ -127,6 +152,7 @@ export default function CartPage() {
       clearCartId();
       setCart({ id, items: [] });
       setPreview(null);
+      emitCartChanged({ count: 0 });
     } catch (e) {
       setMsg(parseApiError(e));
     } finally {
@@ -204,22 +230,87 @@ export default function CartPage() {
             }}
             className="adb-cart-grid"
           >
-            <div className="adb-card" style={{ padding: 0, overflow: "hidden" }}>
-              {cart!.items.map((it) => (
+            <div className="adb-card adb-stagger" style={{ padding: 0, overflow: "hidden" }}>
+              {cart!.items.map((it) => {
+                const href = it.productSlug ? `/urun/${it.productSlug}` : null;
+                return (
                 <div
                   key={it.variantId}
+                  className="adb-animate-in adb-cart-row"
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr auto",
-                    gap: 12,
-                    padding: "16px 18px",
+                    gridTemplateColumns: "88px minmax(0, 1fr) auto",
+                    gap: 16,
+                    padding: "18px 20px",
                     borderBottom: "1px solid var(--adb-border-subtle)",
+                    alignItems: "center",
                   }}
                 >
+                  {href ? (
+                    <Link
+                      href={href}
+                      className="adb-cart-row-thumb"
+                      style={{
+                        width: 88,
+                        height: 88,
+                        borderRadius: 8,
+                        background: "linear-gradient(180deg,#f7fafc,#eef3f7)",
+                        display: "grid",
+                        placeItems: "center",
+                        border: "1px solid var(--adb-border-subtle)",
+                        textDecoration: "none",
+                      }}
+                      aria-label={`${it.name} ürün sayfası`}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 36, color: "var(--adb-primary)" }}>
+                        kitchen
+                      </span>
+                    </Link>
+                  ) : (
+                    <div
+                      className="adb-cart-row-thumb"
+                      style={{
+                        width: 88,
+                        height: 88,
+                        borderRadius: 8,
+                        background: "linear-gradient(180deg,#f7fafc,#eef3f7)",
+                        display: "grid",
+                        placeItems: "center",
+                        border: "1px solid var(--adb-border-subtle)",
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 36, color: "var(--adb-primary)" }}>
+                        kitchen
+                      </span>
+                    </div>
+                  )}
                   <div>
-                    <div style={{ fontWeight: 700 }}>{it.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--adb-muted)", marginTop: 4 }}>
-                      SKU {it.sku}
+                    {href ? (
+                      <Link
+                        href={href}
+                        style={{
+                          fontWeight: 700,
+                          fontFamily: "var(--adb-font-display)",
+                          fontSize: 16,
+                          color: "inherit",
+                          textDecoration: "none",
+                        }}
+                      >
+                        {it.name}
+                      </Link>
+                    ) : (
+                      <div style={{ fontWeight: 700, fontFamily: "var(--adb-font-display)", fontSize: 16 }}>{it.name}</div>
+                    )}
+                    <div style={{ fontSize: 12, color: "var(--adb-muted)", marginTop: 4, letterSpacing: "0.03em" }}>
+                      SKU {it.sku} · Ücretsiz yetkili servis montajı
+                    </div>
+                    <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <span className="adb-pdp-chip adb-pdp-chip-muted" style={{ fontSize: 10 }}>
+                        Orijinal Beko
+                      </span>
+                      <span className="adb-pdp-chip adb-pdp-chip-muted" style={{ fontSize: 10 }}>
+                        3+4 garanti
+                      </span>
                     </div>
                     <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                       <div
@@ -270,8 +361,8 @@ export default function CartPage() {
                       </button>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontWeight: 800, fontFeatureSettings: '"tnum" 1' }}>
+                  <div className="adb-cart-row-price" style={{ textAlign: "right", minWidth: 0 }}>
+                    <div style={{ fontWeight: 800, fontFeatureSettings: '"tnum" 1', fontFamily: "var(--adb-font-display)", fontSize: 18, color: "var(--adb-primary-deep)" }}>
                       {formatTRY(it.unitPrice * it.qty)}
                     </div>
                     <div style={{ fontSize: 12, color: "var(--adb-muted)", marginTop: 4 }}>
@@ -279,7 +370,8 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
 
             <aside className="adb-card" style={{ padding: 20, position: "sticky", top: 96 }}>

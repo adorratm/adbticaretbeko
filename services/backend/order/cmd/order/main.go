@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -177,7 +178,59 @@ CREATE TABLE IF NOT EXISTS service_routes (
   status TEXT NOT NULL DEFAULT 'ACTIVE',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE service_teams ADD COLUMN IF NOT EXISTS access_pin TEXT DEFAULT '1234';
+
+CREATE TABLE IF NOT EXISTS service_jobs (
+  id UUID PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  team_id UUID REFERENCES service_teams(id) ON DELETE SET NULL,
+  route_id UUID REFERENCES service_routes(id) ON DELETE SET NULL,
+  warehouse_code TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'ASSIGNED',
+  scheduled_at TIMESTAMPTZ,
+  address_snapshot TEXT DEFAULT '',
+  customer_name TEXT DEFAULT '',
+  customer_phone TEXT DEFAULT '',
+  district TEXT DEFAULT '',
+  lat DOUBLE PRECISION,
+  lng DOUBLE PRECISION,
+  last_lat DOUBLE PRECISION,
+  last_lng DOUBLE PRECISION,
+  last_location_at TIMESTAMPTZ,
+  notes TEXT DEFAULT '',
+  assigned_technician TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS service_job_location_points (
+  id UUID PRIMARY KEY,
+  job_id UUID NOT NULL REFERENCES service_jobs(id) ON DELETE CASCADE,
+  team_id UUID REFERENCES service_teams(id) ON DELETE SET NULL,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
+  recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  source TEXT NOT NULL DEFAULT 'gps'
+);
+CREATE INDEX IF NOT EXISTS idx_job_location_points_job_at
+  ON service_job_location_points (job_id, recorded_at);
+
+CREATE TABLE IF NOT EXISTS service_job_route_points (
+  id UUID PRIMARY KEY,
+  job_id UUID NOT NULL REFERENCES service_jobs(id) ON DELETE CASCADE,
+  seq INT NOT NULL,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
+  label TEXT NOT NULL DEFAULT '',
+  kind TEXT NOT NULL DEFAULT 'STOP'
+);
+CREATE INDEX IF NOT EXISTS idx_job_route_points_job_seq
+  ON service_job_route_points (job_id, seq);
 `)
+
+	realtimeURL := strings.TrimRight(config.Getenv("REALTIME_URL", "http://localhost:8102"), "/")
+	realtimeSecret := config.Getenv("REALTIME_INTERNAL_SECRET", "adb-dev-realtime")
 
 	client := &http.Client{Timeout: 15 * time.Second}
 
@@ -465,6 +518,28 @@ INSERT INTO order_status_history (id, order_id, from_status, to_status, note) VA
 		httpx.WriteJSON(w, 200, map[string]any{"id": id, "status": body.Status})
 	})
 
+	mux.HandleFunc("GET /v1/service-teams/directory", func(w http.ResponseWriter, r *http.Request) {
+		rid := httpx.RequestIDFromContext(r.Context())
+		rows, err := pool.Query(r.Context(), `
+SELECT id, warehouse_code, name, COALESCE(technician,''), COALESCE(vehicle_plate,'')
+FROM service_teams WHERE COALESCE(active,true)=TRUE ORDER BY name ASC
+`)
+		if err != nil {
+			httpx.WriteError(w, 500, "internal_error", "ekip listesi hatası", rid)
+			return
+		}
+		defer rows.Close()
+		items := []map[string]any{}
+		for rows.Next() {
+			var id, code, name, tech, plate string
+			_ = rows.Scan(&id, &code, &name, &tech, &plate)
+			items = append(items, map[string]any{
+				"id": id, "warehouseCode": code, "name": name, "technician": tech, "vehiclePlate": plate,
+			})
+		}
+		httpx.WriteJSON(w, 200, map[string]any{"items": items})
+	})
+
 	mux.HandleFunc("GET /v1/service-teams", func(w http.ResponseWriter, r *http.Request) {
 		rid := httpx.RequestIDFromContext(r.Context())
 		if !requireAdmin(r, jwtSecret, appEnv) {
@@ -473,7 +548,8 @@ INSERT INTO order_status_history (id, order_id, from_status, to_status, note) VA
 		}
 		wh := r.URL.Query().Get("warehouse")
 		q := `
-SELECT id, warehouse_code, name, COALESCE(technician,''), COALESCE(vehicle_plate,''), COALESCE(active,true), created_at
+SELECT id, warehouse_code, name, COALESCE(technician,''), COALESCE(vehicle_plate,''), COALESCE(active,true),
+  COALESCE(access_pin,'1234'), created_at
 FROM service_teams`
 		args := []any{}
 		if wh != "" {
@@ -489,13 +565,14 @@ FROM service_teams`
 		defer rows.Close()
 		items := []map[string]any{}
 		for rows.Next() {
-			var id, code, name, tech, plate string
+			var id, code, name, tech, plate, pin string
 			var active bool
 			var created time.Time
-			_ = rows.Scan(&id, &code, &name, &tech, &plate, &active, &created)
+			_ = rows.Scan(&id, &code, &name, &tech, &plate, &active, &pin, &created)
 			items = append(items, map[string]any{
 				"id": id, "warehouseCode": code, "name": name, "technician": tech,
-				"vehiclePlate": plate, "active": active, "createdAt": created.UTC().Format(time.RFC3339),
+				"vehiclePlate": plate, "active": active, "accessPin": pin,
+				"createdAt": created.UTC().Format(time.RFC3339),
 			})
 		}
 		httpx.WriteJSON(w, 200, map[string]any{"items": items})
@@ -512,6 +589,7 @@ FROM service_teams`
 			Name          string `json:"name"`
 			Technician    string `json:"technician"`
 			VehiclePlate  string `json:"vehiclePlate"`
+			AccessPin     string `json:"accessPin"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || strings.TrimSpace(body.Name) == "" {
 			httpx.WriteError(w, 400, "validation_error", "name gerekli", rid)
@@ -520,18 +598,21 @@ FROM service_teams`
 		if body.WarehouseCode == "" {
 			body.WarehouseCode = "BESIKTAS"
 		}
+		if body.AccessPin == "" {
+			body.AccessPin = "1234"
+		}
 		id := uuid.NewString()
 		_, err := pool.Exec(r.Context(), `
-INSERT INTO service_teams (id, warehouse_code, name, technician, vehicle_plate, active)
-VALUES ($1,$2,$3,$4,$5,true)
-`, id, body.WarehouseCode, strings.TrimSpace(body.Name), body.Technician, body.VehiclePlate)
+INSERT INTO service_teams (id, warehouse_code, name, technician, vehicle_plate, active, access_pin)
+VALUES ($1,$2,$3,$4,$5,true,$6)
+`, id, body.WarehouseCode, strings.TrimSpace(body.Name), body.Technician, body.VehiclePlate, body.AccessPin)
 		if err != nil {
 			httpx.WriteError(w, 500, "internal_error", "ekip oluşturulamadı", rid)
 			return
 		}
 		httpx.WriteJSON(w, 201, map[string]any{
 			"id": id, "warehouseCode": body.WarehouseCode, "name": body.Name,
-			"technician": body.Technician, "vehiclePlate": body.VehiclePlate, "active": true,
+			"technician": body.Technician, "vehiclePlate": body.VehiclePlate, "active": true, "accessPin": body.AccessPin,
 		})
 	})
 
@@ -756,7 +837,504 @@ WHERE id=$1
 		httpx.WriteJSON(w, 200, map[string]any{"ok": true, "id": id})
 	})
 
+	mux.HandleFunc("GET /v1/service-jobs", func(w http.ResponseWriter, r *http.Request) {
+		rid := httpx.RequestIDFromContext(r.Context())
+		if !requireAdmin(r, jwtSecret, appEnv) {
+			httpx.WriteError(w, 403, "forbidden", "admin yetkisi gerekli", rid)
+			return
+		}
+		wh := r.URL.Query().Get("warehouse")
+		status := r.URL.Query().Get("status")
+		teamID := r.URL.Query().Get("teamId")
+		q := `
+SELECT j.id, j.order_id, COALESCE(j.team_id::text,''), COALESCE(j.route_id::text,''), j.warehouse_code, j.status,
+  COALESCE(j.address_snapshot,''), COALESCE(j.customer_name,''), COALESCE(j.customer_phone,''), COALESCE(j.district,''),
+  j.lat, j.lng, j.last_lat, j.last_lng, j.last_location_at, COALESCE(j.notes,''), COALESCE(j.assigned_technician,''),
+  j.created_at, COALESCE(t.name,''), COALESCE(t.vehicle_plate,'')
+FROM service_jobs j
+LEFT JOIN service_teams t ON t.id=j.team_id`
+		args := []any{}
+		where := []string{}
+		if wh != "" {
+			args = append(args, wh)
+			where = append(where, "j.warehouse_code=$"+strconv.Itoa(len(args)))
+		}
+		if status != "" && status != "ALL" {
+			args = append(args, status)
+			where = append(where, "j.status=$"+strconv.Itoa(len(args)))
+		}
+		if teamID != "" {
+			args = append(args, teamID)
+			where = append(where, "j.team_id=$"+strconv.Itoa(len(args)))
+		}
+		if len(where) > 0 {
+			q += " WHERE " + strings.Join(where, " AND ")
+		}
+		q += ` ORDER BY j.created_at DESC LIMIT 100`
+		rows, err := pool.Query(r.Context(), q, args...)
+		if err != nil {
+			httpx.WriteError(w, 500, "internal_error", "iş listesi hatası", rid)
+			return
+		}
+		defer rows.Close()
+		items := []map[string]any{}
+		for rows.Next() {
+			items = append(items, scanJob(rows))
+		}
+		httpx.WriteJSON(w, 200, map[string]any{"items": items})
+	})
+
+	mux.HandleFunc("GET /v1/service-jobs/mine", func(w http.ResponseWriter, r *http.Request) {
+		rid := httpx.RequestIDFromContext(r.Context())
+		teamID := r.URL.Query().Get("teamId")
+		pin := r.URL.Query().Get("pin")
+		if teamID == "" || pin == "" {
+			httpx.WriteError(w, 400, "validation_error", "teamId ve pin gerekli", rid)
+			return
+		}
+		var dbPin string
+		err := pool.QueryRow(r.Context(), `SELECT COALESCE(access_pin,'1234') FROM service_teams WHERE id=$1 AND COALESCE(active,true)=TRUE`, teamID).Scan(&dbPin)
+		if err != nil || dbPin != pin {
+			httpx.WriteError(w, 401, "unauthorized", "ekip veya pin hatalı", rid)
+			return
+		}
+		rows, err := pool.Query(r.Context(), `
+SELECT j.id, j.order_id, COALESCE(j.team_id::text,''), COALESCE(j.route_id::text,''), j.warehouse_code, j.status,
+  COALESCE(j.address_snapshot,''), COALESCE(j.customer_name,''), COALESCE(j.customer_phone,''), COALESCE(j.district,''),
+  j.lat, j.lng, j.last_lat, j.last_lng, j.last_location_at, COALESCE(j.notes,''), COALESCE(j.assigned_technician,''),
+  j.created_at, COALESCE(t.name,''), COALESCE(t.vehicle_plate,'')
+FROM service_jobs j
+LEFT JOIN service_teams t ON t.id=j.team_id
+WHERE j.team_id=$1 AND j.status <> 'CANCELLED'
+ORDER BY CASE j.status WHEN 'EN_ROUTE' THEN 0 WHEN 'ACCEPTED' THEN 1 WHEN 'ASSIGNED' THEN 2 WHEN 'ON_SITE' THEN 3 ELSE 4 END, j.created_at DESC
+LIMIT 50
+`, teamID)
+		if err != nil {
+			httpx.WriteError(w, 500, "internal_error", "iş listesi hatası", rid)
+			return
+		}
+		defer rows.Close()
+		items := []map[string]any{}
+		for rows.Next() {
+			items = append(items, scanJob(rows))
+		}
+		httpx.WriteJSON(w, 200, map[string]any{"items": items, "teamId": teamID})
+	})
+
+	mux.HandleFunc("POST /v1/service-jobs", func(w http.ResponseWriter, r *http.Request) {
+		rid := httpx.RequestIDFromContext(r.Context())
+		if !requireAdmin(r, jwtSecret, appEnv) {
+			httpx.WriteError(w, 403, "forbidden", "admin yetkisi gerekli", rid)
+			return
+		}
+		var body struct {
+			OrderID       string  `json:"orderId"`
+			TeamID        string  `json:"teamId"`
+			RouteID       string  `json:"routeId"`
+			WarehouseCode string  `json:"warehouseCode"`
+			Notes         string  `json:"notes"`
+			Lat           float64 `json:"lat"`
+			Lng           float64 `json:"lng"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.OrderID == "" || body.TeamID == "" {
+			httpx.WriteError(w, 400, "validation_error", "orderId ve teamId gerekli", rid)
+			return
+		}
+		var custName, custPhone, district, addr, city, tech, plate, teamWh string
+		err := pool.QueryRow(r.Context(), `
+SELECT COALESCE(customer_name,''), COALESCE(customer_phone,''), COALESCE(district,''),
+  COALESCE(address_line,''), COALESCE(city,'') FROM orders WHERE id=$1
+`, body.OrderID).Scan(&custName, &custPhone, &district, &addr, &city)
+		if err != nil {
+			httpx.WriteError(w, 404, "not_found", "sipariş yok", rid)
+			return
+		}
+		err = pool.QueryRow(r.Context(), `
+SELECT COALESCE(technician,''), COALESCE(vehicle_plate,''), warehouse_code FROM service_teams WHERE id=$1
+`, body.TeamID).Scan(&tech, &plate, &teamWh)
+		if err != nil {
+			httpx.WriteError(w, 404, "not_found", "ekip yok", rid)
+			return
+		}
+		if body.WarehouseCode == "" {
+			body.WarehouseCode = teamWh
+		}
+		snapshot := strings.TrimSpace(strings.Join([]string{addr, district, city}, ", "))
+		id := uuid.NewString()
+		var routeArg any
+		if body.RouteID != "" {
+			routeArg = body.RouteID
+		}
+		var latArg, lngArg any
+		if body.Lat != 0 || body.Lng != 0 {
+			latArg, lngArg = body.Lat, body.Lng
+		}
+		_, err = pool.Exec(r.Context(), `
+INSERT INTO service_jobs (
+  id, order_id, team_id, route_id, warehouse_code, status, address_snapshot,
+  customer_name, customer_phone, district, lat, lng, notes, assigned_technician
+) VALUES ($1,$2,$3,$4,$5,'ASSIGNED',$6,$7,$8,$9,$10,$11,$12,$13)
+`, id, body.OrderID, body.TeamID, routeArg, body.WarehouseCode, snapshot, custName, custPhone, district, latArg, lngArg, body.Notes, tech)
+		if err != nil {
+			httpx.WriteError(w, 500, "internal_error", "iş emri oluşturulamadı: "+err.Error(), rid)
+			return
+		}
+		sref := tech
+		if plate != "" {
+			sref = tech + " / " + plate
+		}
+		_, _ = pool.Exec(r.Context(), `
+UPDATE orders SET service_ref=$2, montage_status=COALESCE(NULLIF(montage_status,''), 'Randevu planlandı'),
+  status=CASE WHEN status IN ('PAID','PROCESSING','PACKED','SHIPPED','DELIVERED','MONTAJ_BEKLIYOR') THEN 'MONTAJ_RANDEVU' ELSE status END,
+  updated_at=NOW()
+WHERE id=$1
+`, body.OrderID, sref)
+		pushJobEvent(client, realtimeURL, realtimeSecret, "job.status", map[string]any{
+			"jobId": id, "teamId": body.TeamID, "orderId": body.OrderID, "status": "ASSIGNED",
+		})
+		if body.Lat != 0 || body.Lng != 0 {
+			_ = upsertPlannedRoute(r.Context(), pool, id, body.WarehouseCode, body.Lat, body.Lng, district)
+		}
+		httpx.WriteJSON(w, 201, map[string]any{"id": id, "orderId": body.OrderID, "teamId": body.TeamID, "status": "ASSIGNED"})
+	})
+
+	mux.HandleFunc("PATCH /v1/service-jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
+		rid := httpx.RequestIDFromContext(r.Context())
+		id := r.PathValue("id")
+		var body struct {
+			Status string  `json:"status"`
+			Notes  string  `json:"notes"`
+			TeamID string  `json:"teamId"`
+			Pin    string  `json:"pin"`
+			Lat    float64 `json:"lat"`
+			Lng    float64 `json:"lng"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			httpx.WriteError(w, 400, "validation_error", "geçersiz gövde", rid)
+			return
+		}
+		var teamID, orderID, curStatus string
+		err := pool.QueryRow(r.Context(), `SELECT COALESCE(team_id::text,''), order_id::text, status FROM service_jobs WHERE id=$1`, id).Scan(&teamID, &orderID, &curStatus)
+		if err != nil {
+			httpx.WriteError(w, 404, "not_found", "iş emri yok", rid)
+			return
+		}
+		isAdmin := requireAdmin(r, jwtSecret, appEnv)
+		if !isAdmin {
+			if body.TeamID == "" || body.Pin == "" || body.TeamID != teamID {
+				httpx.WriteError(w, 403, "forbidden", "ekip pin gerekli", rid)
+				return
+			}
+			var dbPin string
+			_ = pool.QueryRow(r.Context(), `SELECT COALESCE(access_pin,'1234') FROM service_teams WHERE id=$1`, teamID).Scan(&dbPin)
+			if dbPin != body.Pin {
+				httpx.WriteError(w, 401, "unauthorized", "pin hatalı", rid)
+				return
+			}
+		}
+		if body.Status == "" {
+			body.Status = curStatus
+		}
+		_, err = pool.Exec(r.Context(), `
+UPDATE service_jobs SET
+  status=$2,
+  notes=COALESCE(NULLIF($3,''), notes),
+  last_lat=COALESCE(NULLIF($4,0), last_lat),
+  last_lng=COALESCE(NULLIF($5,0), last_lng),
+  last_location_at=CASE WHEN $4<>0 OR $5<>0 THEN NOW() ELSE last_location_at END,
+  updated_at=NOW()
+WHERE id=$1
+`, id, body.Status, body.Notes, body.Lat, body.Lng)
+		if err != nil {
+			httpx.WriteError(w, 500, "internal_error", "güncellenemedi", rid)
+			return
+		}
+		if body.Lat != 0 || body.Lng != 0 {
+			src := "gps"
+			if isAdmin {
+				src = "sim"
+			}
+			insertLocationPoint(r.Context(), pool, id, teamID, body.Lat, body.Lng, src)
+		}
+		montage := ""
+		orderStatus := ""
+		switch body.Status {
+		case "ACCEPTED":
+			montage = "Ekip kabul etti"
+		case "EN_ROUTE":
+			montage, orderStatus = "Yolda", "MONTAJ_YOLDA"
+		case "ON_SITE":
+			montage = "Sahada"
+		case "DONE":
+			montage, orderStatus = "Tamamlandı", "MONTAJ_TAMAMLANDI"
+		}
+		if montage != "" {
+			if orderStatus != "" {
+				_, _ = pool.Exec(r.Context(), `UPDATE orders SET montage_status=$2, status=$3, updated_at=NOW() WHERE id=$1`, orderID, montage, orderStatus)
+			} else {
+				_, _ = pool.Exec(r.Context(), `UPDATE orders SET montage_status=$2, updated_at=NOW() WHERE id=$1`, orderID, montage)
+			}
+		}
+		pushJobEvent(client, realtimeURL, realtimeSecret, "job.status", map[string]any{
+			"jobId": id, "teamId": teamID, "orderId": orderID, "status": body.Status,
+			"lat": body.Lat, "lng": body.Lng,
+		})
+		httpx.WriteJSON(w, 200, map[string]any{"ok": true, "id": id, "status": body.Status})
+	})
+
+	mux.HandleFunc("POST /v1/service-jobs/{id}/location", func(w http.ResponseWriter, r *http.Request) {
+		rid := httpx.RequestIDFromContext(r.Context())
+		id := r.PathValue("id")
+		var body struct {
+			TeamID string  `json:"teamId"`
+			Pin    string  `json:"pin"`
+			Lat    float64 `json:"lat"`
+			Lng    float64 `json:"lng"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || (body.Lat == 0 && body.Lng == 0) {
+			httpx.WriteError(w, 400, "validation_error", "lat/lng gerekli", rid)
+			return
+		}
+		var teamID string
+		err := pool.QueryRow(r.Context(), `SELECT COALESCE(team_id::text,'') FROM service_jobs WHERE id=$1`, id).Scan(&teamID)
+		if err != nil {
+			httpx.WriteError(w, 404, "not_found", "iş emri yok", rid)
+			return
+		}
+		isAdmin := requireAdmin(r, jwtSecret, appEnv)
+		if !isAdmin {
+			if body.TeamID == "" || body.Pin == "" || body.TeamID != teamID {
+				httpx.WriteError(w, 403, "forbidden", "ekip pin gerekli", rid)
+				return
+			}
+			var dbPin string
+			_ = pool.QueryRow(r.Context(), `SELECT COALESCE(access_pin,'1234') FROM service_teams WHERE id=$1`, teamID).Scan(&dbPin)
+			if dbPin != body.Pin {
+				httpx.WriteError(w, 401, "unauthorized", "pin hatalı", rid)
+				return
+			}
+		}
+		_, _ = pool.Exec(r.Context(), `
+UPDATE service_jobs SET last_lat=$2, last_lng=$3, last_location_at=NOW(), updated_at=NOW() WHERE id=$1
+`, id, body.Lat, body.Lng)
+		source := "gps"
+		if isAdmin {
+			source = "sim"
+		}
+		insertLocationPoint(r.Context(), pool, id, teamID, body.Lat, body.Lng, source)
+		pushJobEvent(client, realtimeURL, realtimeSecret, "job.location", map[string]any{
+			"jobId": id, "teamId": teamID, "lat": body.Lat, "lng": body.Lng, "at": time.Now().UTC().Format(time.RFC3339),
+		})
+		httpx.WriteJSON(w, 200, map[string]any{"ok": true, "id": id})
+	})
+
+	mux.HandleFunc("GET /v1/service-jobs/{id}/trail", func(w http.ResponseWriter, r *http.Request) {
+		rid := httpx.RequestIDFromContext(r.Context())
+		id := r.PathValue("id")
+		if !requireAdmin(r, jwtSecret, appEnv) {
+			httpx.WriteError(w, 403, "forbidden", "admin yetkisi gerekli", rid)
+			return
+		}
+		var exists string
+		if err := pool.QueryRow(r.Context(), `SELECT id::text FROM service_jobs WHERE id=$1`, id).Scan(&exists); err != nil {
+			httpx.WriteError(w, 404, "not_found", "iş emri yok", rid)
+			return
+		}
+		trailRows, err := pool.Query(r.Context(), `
+SELECT lat, lng, recorded_at, COALESCE(source,'gps')
+FROM service_job_location_points WHERE job_id=$1 ORDER BY recorded_at ASC, id ASC LIMIT 2000
+`, id)
+		if err != nil {
+			httpx.WriteError(w, 500, "internal_error", err.Error(), rid)
+			return
+		}
+		defer trailRows.Close()
+		trail := []map[string]any{}
+		for trailRows.Next() {
+			var lat, lng float64
+			var at time.Time
+			var source string
+			if err := trailRows.Scan(&lat, &lng, &at, &source); err != nil {
+				continue
+			}
+			trail = append(trail, map[string]any{
+				"lat": lat, "lng": lng, "at": at.UTC().Format(time.RFC3339), "source": source,
+			})
+		}
+		planRows, err := pool.Query(r.Context(), `
+SELECT seq, lat, lng, COALESCE(label,''), COALESCE(kind,'STOP')
+FROM service_job_route_points WHERE job_id=$1 ORDER BY seq ASC
+`, id)
+		if err != nil {
+			httpx.WriteError(w, 500, "internal_error", err.Error(), rid)
+			return
+		}
+		defer planRows.Close()
+		planned := []map[string]any{}
+		for planRows.Next() {
+			var seq int
+			var lat, lng float64
+			var label, kind string
+			if err := planRows.Scan(&seq, &lat, &lng, &label, &kind); err != nil {
+				continue
+			}
+			planned = append(planned, map[string]any{
+				"seq": seq, "lat": lat, "lng": lng, "label": label, "kind": kind,
+			})
+		}
+		httpx.WriteJSON(w, 200, map[string]any{"jobId": id, "trail": trail, "planned": planned})
+	})
+
+	mux.HandleFunc("POST /v1/service-jobs/{id}/route", func(w http.ResponseWriter, r *http.Request) {
+		rid := httpx.RequestIDFromContext(r.Context())
+		id := r.PathValue("id")
+		if !requireAdmin(r, jwtSecret, appEnv) {
+			httpx.WriteError(w, 403, "forbidden", "admin yetkisi gerekli", rid)
+			return
+		}
+		var body struct {
+			Waypoints []struct {
+				Lat   float64 `json:"lat"`
+				Lng   float64 `json:"lng"`
+				Label string  `json:"label"`
+				Kind  string  `json:"kind"`
+			} `json:"waypoints"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+
+		var wh string
+		var destLat, destLng *float64
+		var district string
+		err := pool.QueryRow(r.Context(), `
+SELECT warehouse_code, lat, lng, COALESCE(district,'') FROM service_jobs WHERE id=$1
+`, id).Scan(&wh, &destLat, &destLng, &district)
+		if err != nil {
+			httpx.WriteError(w, 404, "not_found", "iş emri yok", rid)
+			return
+		}
+
+		if len(body.Waypoints) >= 2 {
+			_, _ = pool.Exec(r.Context(), `DELETE FROM service_job_route_points WHERE job_id=$1`, id)
+			for i, wp := range body.Waypoints {
+				kind := strings.TrimSpace(wp.Kind)
+				if kind == "" {
+					if i == 0 {
+						kind = "START"
+					} else if i == len(body.Waypoints)-1 {
+						kind = "END"
+					} else {
+						kind = "STOP"
+					}
+				}
+				_, _ = pool.Exec(r.Context(), `
+INSERT INTO service_job_route_points (id, job_id, seq, lat, lng, label, kind)
+VALUES ($1,$2,$3,$4,$5,$6,$7)
+`, uuid.NewString(), id, i, wp.Lat, wp.Lng, wp.Label, kind)
+			}
+		} else {
+			endLat, endLng := 0.0, 0.0
+			if destLat != nil && destLng != nil {
+				endLat, endLng = *destLat, *destLng
+			}
+			if endLat == 0 && endLng == 0 {
+				httpx.WriteError(w, 400, "validation_error", "iş emrinde hedef konum yok", rid)
+				return
+			}
+			if err := upsertPlannedRoute(r.Context(), pool, id, wh, endLat, endLng, district); err != nil {
+				httpx.WriteError(w, 500, "internal_error", err.Error(), rid)
+				return
+			}
+		}
+		httpx.WriteJSON(w, 200, map[string]any{"ok": true, "jobId": id})
+	})
+
 	_ = httpx.ListenAndServe(addr, httpx.CORS(httpx.WithRequestID(httpx.WithLogging(log, mux))), log)
+}
+
+func warehouseCoords(code string) (float64, float64) {
+	switch strings.ToUpper(strings.TrimSpace(code)) {
+	case "BESIKTAS":
+		return 41.0422, 29.0067
+	case "KADIKOY":
+		return 40.9901, 29.0292
+	case "USKUDAR":
+		return 41.0255, 29.0150
+	default:
+		return 41.015, 28.98
+	}
+}
+
+func haversineM(lat1, lng1, lat2, lng2 float64) float64 {
+	const r = 6371000.0
+	p1, p2 := lat1*math.Pi/180, lat2*math.Pi/180
+	dLat := (lat2 - lat1) * math.Pi / 180
+	dLng := (lng2 - lng1) * math.Pi / 180
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) + math.Cos(p1)*math.Cos(p2)*math.Sin(dLng/2)*math.Sin(dLng/2)
+	return 2 * r * math.Asin(math.Min(1, math.Sqrt(a)))
+}
+
+func insertLocationPoint(ctx context.Context, pool *pgxpool.Pool, jobID, teamID string, lat, lng float64, source string) {
+	var prevLat, prevLng *float64
+	var prevAt *time.Time
+	_ = pool.QueryRow(ctx, `
+SELECT lat, lng, recorded_at FROM service_job_location_points
+WHERE job_id=$1 ORDER BY recorded_at DESC, id DESC LIMIT 1
+`, jobID).Scan(&prevLat, &prevLng, &prevAt)
+	if prevLat != nil && prevLng != nil && prevAt != nil {
+		if time.Since(*prevAt) < 8*time.Second && haversineM(*prevLat, *prevLng, lat, lng) < 25 {
+			return
+		}
+	}
+	var teamArg any
+	if teamID != "" {
+		teamArg = teamID
+	}
+	_, _ = pool.Exec(ctx, `
+INSERT INTO service_job_location_points (id, job_id, team_id, lat, lng, recorded_at, source)
+VALUES ($1,$2,$3,$4,$5,NOW(),$6)
+`, uuid.NewString(), jobID, teamArg, lat, lng, source)
+}
+
+func upsertPlannedRoute(ctx context.Context, pool *pgxpool.Pool, jobID, warehouseCode string, endLat, endLng float64, district string) error {
+	startLat, startLng := warehouseCoords(warehouseCode)
+	_, _ = pool.Exec(ctx, `DELETE FROM service_job_route_points WHERE job_id=$1`, jobID)
+
+	type pt struct {
+		lat, lng float64
+		label    string
+		kind     string
+	}
+	points := []pt{
+		{startLat, startLng, "Şube / depo", "START"},
+	}
+	// Ara noktalar (doğrusal interpolasyon — ücretsiz planlı rota)
+	steps := 4
+	for i := 1; i <= steps; i++ {
+		t := float64(i) / float64(steps+1)
+		// hafif eğri için sinüs ofseti
+		off := math.Sin(t*math.Pi) * 0.004
+		points = append(points, pt{
+			startLat + (endLat-startLat)*t + off*0.4,
+			startLng + (endLng-startLng)*t + off,
+			"Ara nokta",
+			"STOP",
+		})
+	}
+	endLabel := "Müşteri"
+	if strings.TrimSpace(district) != "" {
+		endLabel = "Müşteri · " + district
+	}
+	points = append(points, pt{endLat, endLng, endLabel, "END"})
+
+	for i, p := range points {
+		if _, err := pool.Exec(ctx, `
+INSERT INTO service_job_route_points (id, job_id, seq, lat, lng, label, kind)
+VALUES ($1,$2,$3,$4,$5,$6,$7)
+`, uuid.NewString(), jobID, i, p.lat, p.lng, p.label, p.kind); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func createShipment(client *http.Client, shipmentURL, orderID string) {
@@ -770,6 +1348,54 @@ func createShipment(client *http.Client, shipmentURL, orderID string) {
 func sendNotif(client *http.Client, notifURL, template string, data map[string]any) {
 	payload, _ := json.Marshal(map[string]any{"template": template, "channel": "sms", "data": data})
 	resp, err := client.Post(notifURL+"/v1/notifications/send", "application/json", bytes.NewReader(payload))
+	if err == nil {
+		resp.Body.Close()
+	}
+}
+
+func scanJob(rows pgx.Row) map[string]any {
+	var id, orderID, teamID, routeID, wh, status, addr, name, phone, district, notes, tech, teamName, plate string
+	var lat, lng, lastLat, lastLng *float64
+	var lastAt *time.Time
+	var created time.Time
+	_ = rows.Scan(&id, &orderID, &teamID, &routeID, &wh, &status, &addr, &name, &phone, &district,
+		&lat, &lng, &lastLat, &lastLng, &lastAt, &notes, &tech, &created, &teamName, &plate)
+	out := map[string]any{
+		"id": id, "orderId": orderID, "teamId": teamID, "routeId": routeID, "warehouseCode": wh,
+		"status": status, "addressSnapshot": addr, "customerName": name, "customerPhone": phone,
+		"district": district, "notes": notes, "assignedTechnician": tech,
+		"teamName": teamName, "vehiclePlate": plate, "createdAt": created.UTC().Format(time.RFC3339),
+	}
+	if lat != nil {
+		out["lat"] = *lat
+	}
+	if lng != nil {
+		out["lng"] = *lng
+	}
+	if lastLat != nil {
+		out["lastLat"] = *lastLat
+	}
+	if lastLng != nil {
+		out["lastLng"] = *lastLng
+	}
+	if lastAt != nil {
+		out["lastLocationAt"] = lastAt.UTC().Format(time.RFC3339)
+	}
+	return out
+}
+
+func pushJobEvent(client *http.Client, realtimeURL, secret, event string, data map[string]any) {
+	if realtimeURL == "" {
+		return
+	}
+	payload, _ := json.Marshal(map[string]any{"event": event, "data": data})
+	req, err := http.NewRequest(http.MethodPost, realtimeURL+"/job-event", bytes.NewReader(payload))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Internal-Secret", secret)
+	resp, err := client.Do(req)
 	if err == nil {
 		resp.Body.Close()
 	}

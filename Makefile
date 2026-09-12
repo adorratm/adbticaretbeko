@@ -1,7 +1,7 @@
-.PHONY: infra down payment shipment notification order checkout gateway auth cms cart catalog inventory pricing search backends help
+.PHONY: infra down payment shipment notification order checkout gateway auth cms cart catalog inventory pricing search search-infra search-reindex backends help
 
 help:
-	@echo "Targets: infra backends auth catalog search gateway ..."
+	@echo "Targets: infra backends search-infra search-reindex ..."
 
 backends:
 	powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/dev-backends.ps1
@@ -11,6 +11,9 @@ infra:
 
 search-infra:
 	docker compose --profile search up -d elasticsearch
+
+search-reindex:
+	powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/search-reindex.ps1
 
 down:
 	docker compose down
