@@ -8,7 +8,8 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # PG 18+: mount parent dir (versioned data lives under PG_MAJOR/)
+      - postgres_data:/var/lib/postgresql
       - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-adb} -d ${POSTGRES_DB:-adb_ticaret}"]
